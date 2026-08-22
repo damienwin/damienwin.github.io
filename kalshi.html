@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kalshi Sentiment Predictor — Damien Nguyen</title>
+<meta name="description" content="An LLM-driven AutoML loop for prediction-market sentiment, the data leak that invalidated its best result, and the honest null that replaced it." />
+<script>document.documentElement.className += " js";</script>
+<style>
+  :root {
+    --ground: #f7f6f3; --surface: #ffffff; --sunk: #efede8;
+    --ink: #14171d; --ink-2: #565c68; --ink-3: #8a8f9b; --rule: #e2dfd8;
+    --accent: #2f52e0; --accent-2: #6b86f0; --accent-soft: #e8ecfd;
+    --warn: #b4720e; --warn-soft: #f6ecdb; --good: #137a54;
+    --hero-top: #080b10; --hero-mid: #141a26;
+    --card-shadow: 0 1px 2px rgba(20,23,29,.04), 0 12px 34px rgba(20,23,29,.07);
+    --pill-glow: 0 4px 20px rgba(47,82,224,.35);
+    --display: "Hoefler Text", Baskerville, "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
+      --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
+      --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
+      --warn: #d5a05a; --warn-soft: #241d12; --good: #4fbf93;
+      --hero-top: #05070a; --hero-mid: #0a0d13;
+      --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
+      --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
+    --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
+    --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
+    --warn: #d5a05a; --warn-soft: #241d12; --good: #4fbf93;
+    --hero-top: #05070a; --hero-mid: #0a0d13;
+    --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
+    --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16.5px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+  .col { max-width: 64ch; }
+  p { margin: 0 0 1em; } p:last-child { margin-bottom: 0; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+
+  nav.top {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    padding: 20px 28px; max-width: 1000px; margin: 0 auto;
+  }
+  nav.top .back {
+    font-size: .84rem; color: rgba(255,255,255,.62); text-decoration: none;
+    transition: opacity 320ms ease, color 400ms ease;
+  }
+  nav.top .back:hover { color: #fff; }
+  nav.top[data-past="true"] .back { opacity: 0; pointer-events: none; }
+  .pill {
+    font-size: .84rem; font-weight: 500; color: #fff;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    border-radius: 999px; padding: 9px 20px; text-decoration: none;
+    box-shadow: var(--pill-glow); white-space: nowrap;
+    transition: transform 200ms ease;
+  }
+  .pill:hover { transform: translateY(-1px); }
+
+  /* hero */
+  .hero {
+    background: linear-gradient(180deg, var(--hero-top) 0%, var(--hero-mid) 58%, var(--ground) 100%);
+    padding: 148px 0 200px; text-align: center;
+  }
+  .hero .kicker {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .2em;
+    text-transform: uppercase; color: rgba(255,255,255,.46); margin-bottom: 24px;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(2.4rem, 5.8vw, 4.4rem); line-height: 1.04; letter-spacing: -.022em;
+    color: #fff; margin: 0 auto 26px; max-width: 17ch;
+  }
+  h1 em { font-style: italic; color: rgba(255,255,255,.8); }
+  .hero .sub {
+    font-size: clamp(1rem, 1.5vw, 1.13rem); color: rgba(255,255,255,.66);
+    max-width: 56ch; margin: 0 auto 30px; line-height: 1.6;
+  }
+  .hero .stack { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .hero .stack span {
+    font-family: var(--mono); font-size: .72rem; color: rgba(255,255,255,.6);
+    border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 5px 13px;
+  }
+
+  section { padding: 66px 0; }
+  section.lead { padding-top: 30px; }
+  .head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; max-width: 62ch; }
+  .head h2 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(1.7rem, 3.2vw, 2.4rem); line-height: 1.12; letter-spacing: -.02em;
+  }
+  .head p { color: var(--ink-2); }
+
+  .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 700ms ease, transform 700ms ease; }
+  .js .reveal.in { opacity: 1; transform: none; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 16px; box-shadow: var(--card-shadow); overflow: hidden;
+  }
+
+  /* verdict strip */
+  .verdict {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 16px; box-shadow: var(--card-shadow); overflow: hidden;
+  }
+  .verdict div { padding: 28px 26px; border-right: 1px solid var(--rule); }
+  .verdict div:last-child { border-right: none; }
+  @media (max-width: 780px) {
+    .verdict div { border-right: none; border-bottom: 1px solid var(--rule); }
+    .verdict div:last-child { border-bottom: none; }
+  }
+  .verdict .n {
+    font-family: var(--display); font-size: 2.3rem; line-height: 1;
+    letter-spacing: -.03em; font-variant-numeric: tabular-nums; display: block; margin-bottom: 8px;
+  }
+  .verdict .k { font-family: var(--mono); font-size: .72rem; line-height: 1.55; color: var(--ink-3); }
+
+  /* diagram */
+  figure { margin: 0; }
+  .figure-scroll { overflow-x: auto; padding: 28px 24px 6px; }
+  svg.loop { display: block; width: 100%; min-width: 700px; height: auto; color: var(--ink-2); }
+  figcaption {
+    font-family: var(--mono); font-size: .74rem; line-height: 1.6;
+    color: var(--ink-3); padding: 6px 26px 26px; max-width: 76ch;
+  }
+  .box { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
+  .box-accent { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.8; }
+  .n-title { font-family: var(--sans); font-size: 13.5px; font-weight: 600; fill: var(--ink); }
+  .n-sub { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); }
+  .flow { stroke: var(--ink-3); stroke-width: 1.5; fill: none; }
+  .flow-label { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-2); }
+  .rej { stroke: var(--warn); stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+  .rej-label { font-family: var(--mono); font-size: 10.5px; fill: var(--warn); }
+
+  /* leak callout */
+  .leak {
+    border-left: 3px solid var(--warn); background: var(--warn-soft);
+    border-radius: 0 12px 12px 0; padding: 26px 30px;
+  }
+  .leak .tag {
+    font-family: var(--mono); font-size: .68rem; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--warn); display: block; margin-bottom: 12px;
+  }
+  .leak p { color: var(--ink-2); max-width: 72ch; }
+  .leak strong { color: var(--ink); }
+
+  /* results table */
+  table.res { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .8rem; }
+  table.res th, table.res td { text-align: left; padding: 12px 14px 12px 0; border-bottom: 1px solid var(--rule); }
+  table.res th {
+    font-weight: 400; color: var(--ink-3); letter-spacing: .08em;
+    text-transform: uppercase; font-size: .68rem;
+  }
+  table.res td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+  table.res tr.hi td { background: var(--accent-soft); }
+  table.res tr.hi td:first-child { border-radius: 4px 0 0 4px; }
+  table.res tr.hi td:last-child { border-radius: 0 4px 4px 0; }
+  table.res td.dim { color: var(--ink-3); }
+
+  /* future work */
+  ol.future { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; box-shadow: var(--card-shadow); }
+  ol.future li { background: var(--surface); padding: 24px 28px; display: grid; grid-template-columns: 4ch minmax(0,1fr); gap: 20px; align-items: baseline; }
+  ol.future .num { font-family: var(--mono); font-size: .74rem; color: var(--accent); }
+  ol.future h3 { font-size: 1.02rem; font-weight: 600; margin-bottom: 6px; }
+  ol.future p { color: var(--ink-2); font-size: .94rem; }
+
+  .note {
+    font-family: var(--mono); font-size: .74rem; line-height: 1.7;
+    color: var(--ink-3); max-width: 78ch; margin-top: 18px;
+  }
+
+  footer { border-top: 1px solid var(--rule); padding: 44px 0 74px; }
+  .foot { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: baseline; justify-content: space-between; }
+  .foot .links { display: flex; flex-wrap: wrap; gap: 22px; font-size: .9rem; }
+  .foot .links a { color: var(--accent); text-decoration: none; }
+  .foot .links a:hover { text-decoration: underline; }
+  .foot .fine { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+    .js .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top" id="nav">
+  <a class="back" href="index.html">&larr; Damien Nguyen</a>
+  <a class="pill" href="https://github.com/damienwin/kalshi-sentiment-predictor-public">View source</a>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="kicker">AutoML feature discovery · LSU CSC 4444</div>
+    <h1>It beat the baseline.<br /><em>Then I audited it.</em></h1>
+    <p class="sub">
+      An LLM-driven AutoML loop searching for predictive signal in Kalshi
+      prediction markets, starting from transformer sentiment embeddings. Its
+      best run beat the momentum baseline by +0.023 F1. That result was leaked,
+      and finding out why is the actual contribution.
+    </p>
+    <div class="stack">
+      <span>PyTorch</span><span>FinBERT</span><span>Twitter-RoBERTa</span>
+      <span>XGBoost</span><span>AutoML</span><span>NeurIPS-format paper</span>
+    </div>
+  </div>
+</header>
+
+<section class="lead">
+  <div class="container">
+    <div class="verdict reveal">
+      <div>
+        <span class="n">0.390</span>
+        <span class="k">Test Macro F1, best model — 95% CI [0.354, 0.422]</span>
+      </div>
+      <div>
+        <span class="n">0.394</span>
+        <span class="k">Momentum baseline, global. The model does not beat it</span>
+      </div>
+      <div>
+        <span class="n">&minus;0.006</span>
+        <span class="k">Model minus momentum — CI spans zero either direction</span>
+      </div>
+      <div>
+        <span class="n">~0.455</span>
+        <span class="k">F1 on the top-30% most confident predictions — the signal that survived</span>
+      </div>
+    </div>
+    <p class="note reveal">
+      Test window Nov–Dec 2024, held out chronologically. 5,177 price events,
+      70/15/15 chronological split, purged temporal cross-validation. Every
+      figure here is post-audit.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="head reveal">
+      <div class="eyebrow">The question</div>
+      <h2>Does news sentiment carry residual signal a market hasn't priced in?</h2>
+      <p>
+        Prediction markets are supposed to absorb public information quickly. If
+        freely available news sentiment still predicts short-term price moves,
+        that is a small crack in market efficiency. The second question was
+        methodological: can an LLM-driven loop discover useful feature families
+        on its own, without being told what to look for?
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="head reveal">
+      <div class="eyebrow">The loop</div>
+      <h2>A reasoning agent proposes; trial subagents write the code.</h2>
+      <p>
+        Each iteration is a hypothesis with a paper trail. The acceptance gate is
+        the part that matters — it is deliberately hard to pass.
+      </p>
+    </div>
+
+    <div class="card reveal">
+      <figure>
+        <div class="figure-scroll">
+          <svg class="loop" viewBox="0 0 900 400" role="img"
+               aria-label="Diagram of the AutoML feature-discovery loop. A Claude reasoning agent searches literature and reads a structured JSON history of past iterations, then proposes feature candidates. Parallel Claude Haiku trial subagents write each candidate's feature code in isolated git worktrees. Candidates are evaluated under five-fold TimeSeriesSplit cross-validation and must pass a paired per-fold keep rule: beat the current best by 0.005 mean and beat baseline on at least four of five folds. Accepted candidates join the feature set; rejected ones are written back to the history with their reasoning.">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+              </marker>
+              <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)" />
+              </marker>
+            </defs>
+
+            <rect class="box" x="16" y="30" width="200" height="70" rx="8" />
+            <text class="n-title" x="36" y="58">Reasoning agent</text>
+            <text class="n-sub" x="36" y="76">literature search</text>
+            <text class="n-sub" x="36" y="90">+ JSON iteration history</text>
+
+            <line class="flow" x1="216" y1="65" x2="258" y2="65" marker-end="url(#ah)" />
+            <text class="flow-label" x="239" y="20" text-anchor="middle">hypothesis</text>
+
+            <rect class="box" x="262" y="30" width="200" height="70" rx="8" />
+            <text class="n-title" x="282" y="58">Haiku trial subagents</text>
+            <text class="n-sub" x="282" y="76">write feature code</text>
+            <text class="n-sub" x="282" y="90">parallel, isolated worktrees</text>
+
+            <line class="flow" x1="462" y1="65" x2="504" y2="65" marker-end="url(#ah)" />
+
+            <rect class="box" x="508" y="30" width="200" height="70" rx="8" />
+            <text class="n-title" x="528" y="58">Evaluation</text>
+            <text class="n-sub" x="528" y="76">5-fold TimeSeriesSplit</text>
+            <text class="n-sub" x="528" y="90">purged temporal CV</text>
+
+            <line class="flow" x1="608" y1="100" x2="608" y2="146" marker-end="url(#ah)" />
+
+            <rect class="box-accent" x="448" y="150" width="320" height="76" rx="8" />
+            <text class="n-title" x="470" y="178">Paired per-fold keep rule</text>
+            <text class="n-sub" x="470" y="197">mean F1 &gt; best + 0.005</text>
+            <text class="n-sub" x="470" y="213">AND beats baseline on 4 of 5 folds</text>
+
+            <line class="flow" x1="448" y1="188" x2="392" y2="188" marker-end="url(#ah)" />
+            <text class="flow-label" x="300" y="184">accepted &rarr;</text>
+            <text class="flow-label" x="300" y="198">joins feature set</text>
+
+            <path class="rej" d="M 608 226 L 608 268 L 116 268 L 116 106" marker-end="url(#ahw)" />
+            <text class="rej-label" x="330" y="288">rejected — written back to history with its reasoning, so the agent stops re-proposing it</text>
+
+            <rect class="box" x="16" y="316" width="868" height="66" rx="8" />
+            <text class="n-title" x="40" y="344">Why the gate is strict</text>
+            <text class="n-sub" x="40" y="364">fold-to-fold F1 noise is about ±0.031 — a mean-only threshold would accept noise as discovery</text>
+          </svg>
+        </div>
+        <figcaption>
+          The keep rule is the whole design. With ±0.031 noise between folds, a
+          candidate can clear a mean-improvement bar on luck alone; requiring it
+          to win on 4 of 5 folds as well is what separates a discovered feature
+          from a coincidence.
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="head reveal">
+      <div class="eyebrow">The audit</div>
+      <h2>The best feature the loop found was memorizing the test set.</h2>
+    </div>
+
+    <div class="leak reveal">
+      <span class="tag">Data-integrity finding</span>
+      <p>
+        An early run reported <strong>F1 = 0.4179</strong>, apparently beating
+        momentum by +0.023, and the gain traced to market-structure features
+        (<strong>market_cat_freq</strong>, <strong>event_hour</strong>) the loop
+        had proposed unprompted. A satisfying result: the agent found something
+        a human hadn't specified.
+      </p>
+      <p>
+        It was leaked. Kalshi renamed ticker prefixes between the train and test
+        windows — <strong>CPI</strong> became <strong>KXCPI</strong> — so only
+        <strong>2 of 32</strong> test prefixes existed in training at all. The
+        frequency encoding wasn't learning market structure; it was
+        distinguishing test rows from train rows.
+      </p>
+      <p>
+        Diagnosing it, rebuilding a KX-normalized encoder, and re-running under
+        purged temporal CV recovered the honest result: no edge over momentum.
+        The paper reports the null.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="head reveal">
+      <div class="eyebrow">Results</div>
+      <h2>Held-out test, after the leak was removed.</h2>
+    </div>
+
+    <table class="res reveal">
+      <thead>
+        <tr><th>Model</th><th class="num">Test Macro F1</th><th>Reading</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Momentum baseline (global)</td><td class="num">0.394</td><td class="dim">the bar to clear</td></tr>
+        <tr><td>Momentum baseline (per-market)</td><td class="num">0.385</td><td class="dim">weaker variant</td></tr>
+        <tr><td>finbert_xgboost (AutoML)</td><td class="num">0.390</td><td class="dim">does not clear it</td></tr>
+        <tr><td>finbert_catboost</td><td class="num">0.382</td><td class="dim">below both baselines</td></tr>
+        <tr class="hi"><td>finbert_xgboost, top-30% confidence</td><td class="num">~0.455</td><td class="dim">the defensible edge</td></tr>
+      </tbody>
+    </table>
+
+    <p class="note reveal">
+      Cross-validation on train and validation, TimeSeriesSplit k=5: 0.385 ± 0.031.
+      The confidence-gated row is the one finding that survives: the model is
+      well calibrated even where it is not more accurate on average, so knowing
+      <em>when</em> it is likely right is worth more than its average accuracy.
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="head reveal">
+      <div class="eyebrow">Future work</div>
+      <h2>What the paper says to do next.</h2>
+      <p>
+        Three changes, each aimed at a specific way this run was weaker than it
+        should have been.
+      </p>
+    </div>
+
+    <ol class="future reveal">
+      <li>
+        <span class="num">01</span>
+        <div>
+          <h3>Use temporal cross-validation from the first iteration</h3>
+          <p>
+            The early loop ran on a fixed validation split, peaked at F1 = 0.373,
+            and collapsed to 0.333 on test. Temporal CV was adopted mid-project
+            as a repair. Starting there would have made every iteration's number
+            comparable and caught the overfit far earlier.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="num">02</span>
+        <div>
+          <h3>Put price-based features in the initial feature set</h3>
+          <p>
+            Rolling volatility, momentum, and bid-ask proxies were never given to
+            the loop as starting material, so it searched sentiment space alone
+            while the baseline it had to beat was itself pure momentum. Seeding
+            the price features lets the search find sentiment signal
+            <em>conditional</em> on them rather than competing against them.
+          </p>
+        </div>
+      </li>
+      <li>
+        <span class="num">03</span>
+        <div>
+          <h3>Optimize for statistical alpha, not raw F1 gain</h3>
+          <p>
+            F1 is the wrong objective for a market question. A model that is
+            rarely confident but well calibrated when it is — exactly what the
+            confidence-gated result describes — scores poorly on average F1 while
+            being the more useful object. Restructuring the AutoML objective
+            toward statistical alpha would search directly for that.
+          </p>
+        </div>
+      </li>
+    </ol>
+
+    <p class="note reveal">
+      Single-author NeurIPS-format paper, LSU CSC 4444, unpublished. Future work
+      as stated in the paper's own discussion section.
+    </p>
+  </div>
+</section>
+
+<footer>
+  <div class="container foot">
+    <div class="links">
+      <a href="index.html">All work</a>
+      <a href="resume-tailorer.html">Resume Tailorer</a>
+      <a href="https://github.com/damienwin/kalshi-sentiment-predictor-public">Source</a>
+      <a href="https://github.com/damienwin">GitHub</a>
+    </div>
+    <span class="fine">Data: Guardian API, GDELT · Oct 2023 – Dec 2024</span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var nav = document.getElementById("nav");
+    var hero = document.querySelector(".hero");
+    function onScroll() {
+      nav.setAttribute("data-past", window.scrollY > hero.offsetHeight - 90 ? "true" : "false");
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  })();
+
+  (function () {
+    var els = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
+    var queued = false;
+    function check() {
+      queued = false;
+      var h = window.innerHeight;
+      for (var i = els.length - 1; i >= 0; i--) {
+        if (els[i].getBoundingClientRect().top < h * 0.94) {
+          els[i].classList.add("in");
+          els.splice(i, 1);
+        }
+      }
+    }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(check); } }
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    window.addEventListener("load", check);
+    check();
+    setTimeout(check, 400);
+  })();
+</script>
+</body>
+</html>

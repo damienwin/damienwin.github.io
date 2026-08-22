@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Damien Nguyen</title>
+<meta name="description" content="Computer Engineering at LSU. ML/AI systems, LLM agent infrastructure, and performance-focused data work." />
+<script>document.documentElement.className += " js";</script>
+<style>
+  :root {
+    --ground: #f7f6f3;
+    --surface: #ffffff;
+    --sunk: #efede8;
+    --ink: #14171d;
+    --ink-2: #565c68;
+    --ink-3: #8a8f9b;
+    --rule: #e2dfd8;
+    --accent: #2f52e0;
+    --accent-2: #6b86f0;
+    --accent-soft: #e8ecfd;
+    --warn: #b4720e;
+    --good: #137a54;
+    --hero-top: #080b10;
+    --hero-mid: #141a26;
+    --card-shadow: 0 1px 2px rgba(20, 23, 29, 0.04), 0 12px 34px rgba(20, 23, 29, 0.07);
+    --pill-glow: 0 4px 20px rgba(47, 82, 224, 0.35);
+    --display: "Hoefler Text", Baskerville, "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
+      --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
+      --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
+      --warn: #d5a05a; --good: #4fbf93;
+      --hero-top: #05070a; --hero-mid: #0a0d13;
+      --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
+      --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
+    --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
+    --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
+    --warn: #d5a05a; --good: #4fbf93;
+    --hero-top: #05070a; --hero-mid: #0a0d13;
+    --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
+    --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: var(--sans); font-size: 16.5px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+  p { margin: 0 0 1em; } p:last-child { margin-bottom: 0; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--ink-3);
+  }
+
+  /* hero */
+  .hero {
+    background: linear-gradient(180deg, var(--hero-top) 0%, var(--hero-mid) 62%, var(--ground) 100%);
+    padding: 132px 0 190px;
+  }
+  .hero .kicker {
+    font-family: var(--mono); font-size: .7rem; letter-spacing: .2em;
+    text-transform: uppercase; color: rgba(255,255,255,.46); margin-bottom: 26px;
+  }
+  h1 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(2.7rem, 7vw, 5.4rem); line-height: 1; letter-spacing: -.025em;
+    color: #fff; margin-bottom: 28px;
+  }
+  .hero .positioning {
+    font-size: clamp(1.05rem, 1.7vw, 1.28rem); line-height: 1.55;
+    color: rgba(255,255,255,.7); max-width: 46ch; margin-bottom: 34px;
+  }
+  .hero .meta {
+    display: flex; flex-wrap: wrap; gap: 10px 26px;
+    font-family: var(--mono); font-size: .76rem; color: rgba(255,255,255,.5);
+  }
+
+  /* sections */
+  section { padding: 70px 0; }
+  .head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 38px; max-width: 60ch; }
+  .head h2 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(1.7rem, 3.2vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em;
+  }
+  .head p { color: var(--ink-2); }
+
+  .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 700ms ease, transform 700ms ease; }
+  .js .reveal.in { opacity: 1; transform: none; }
+
+  /* work */
+  .work { display: flex; flex-direction: column; gap: 20px; }
+  .proj {
+    display: grid; grid-template-columns: 5ch minmax(0, 1fr) minmax(0, 15rem);
+    gap: 12px 34px; align-items: start;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 16px;
+    box-shadow: var(--card-shadow); padding: 30px 32px;
+    text-decoration: none; color: inherit;
+    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  }
+  a.proj:hover { transform: translateY(-2px); border-color: var(--accent); }
+  @media (max-width: 780px) { .proj { grid-template-columns: minmax(0,1fr); gap: 14px; } }
+
+  .proj .idx { font-family: var(--mono); font-size: .74rem; color: var(--ink-3); padding-top: 6px; }
+  .proj h3 {
+    font-family: var(--display); font-weight: 400; font-size: 1.72rem;
+    line-height: 1.15; letter-spacing: -.015em; margin-bottom: 8px;
+  }
+  .proj .blurb { color: var(--ink-2); font-size: .96rem; margin-bottom: 14px; }
+  .proj .tags { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+  .proj .tags span {
+    font-family: var(--mono); font-size: .68rem; color: var(--ink-3);
+    border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px;
+  }
+  .proj .stat {
+    border-left: 2px solid var(--accent-soft); padding-left: 18px;
+  }
+  .proj .stat .n {
+    font-family: var(--display); font-size: 1.9rem; line-height: 1.05;
+    letter-spacing: -.03em; font-variant-numeric: tabular-nums; display: block; margin-bottom: 5px;
+  }
+  .proj .stat .k { font-family: var(--mono); font-size: .7rem; line-height: 1.5; color: var(--ink-3); }
+  .proj .go {
+    grid-column: 2 / -1; font-family: var(--mono); font-size: .74rem;
+    color: var(--accent); margin-top: 16px;
+  }
+  @media (max-width: 780px) { .proj .go { grid-column: 1; } }
+  .proj.static { box-shadow: none; }
+
+  /* experience */
+  table.xp { width: 100%; border-collapse: collapse; font-size: .92rem; }
+  table.xp td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
+  table.xp td.org { font-weight: 600; width: 30%; }
+  table.xp td.role { color: var(--ink-2); }
+  table.xp td.when {
+    font-family: var(--mono); font-size: .74rem; color: var(--ink-3);
+    text-align: right; white-space: nowrap; padding-right: 0;
+  }
+  @media (max-width: 620px) {
+    table.xp td { display: block; border-bottom: none; padding: 2px 0; }
+    table.xp tr { display: block; border-bottom: 1px solid var(--rule); padding: 14px 0; }
+    table.xp td.when { text-align: left; }
+  }
+
+  /* footer */
+  footer { border-top: 1px solid var(--rule); padding: 46px 0 76px; }
+  .foot { display: flex; flex-wrap: wrap; gap: 22px 40px; align-items: baseline; justify-content: space-between; }
+  .foot .links { display: flex; flex-wrap: wrap; gap: 22px; font-size: .9rem; }
+  .foot .links a { color: var(--accent); text-decoration: none; }
+  .foot .links a:hover { text-decoration: underline; }
+  .foot .fine { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+    .js .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="container">
+    <div class="kicker">Damien Nguyen — Baton Rouge, LA</div>
+    <h1>I build systems that<br />check their own work.</h1>
+    <p class="positioning">
+      Computer Engineering at LSU, graduating May 2027. ML and LLM agent
+      infrastructure, performance-focused data work, and applied research —
+      usually with a verification pass bolted to the end of it.
+    </p>
+    <div class="meta">
+      <span>SDE Intern at AWS Supply Chain, summer 2026</span>
+      <span>nguyendamien05@gmail.com</span>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="container">
+    <div class="head reveal">
+      <div class="eyebrow">Selected work</div>
+      <h2>Three projects, and what each one actually proved.</h2>
+    </div>
+
+    <div class="work">
+
+      <a class="proj reveal" href="resume-tailorer.html">
+        <span class="idx">01</span>
+        <div>
+          <h3>Resume Tailorer</h3>
+          <p class="blurb">
+            An agentic pipeline that scans job boards, hands every surviving
+            posting to its own subagent, and generates a one-page LaTeX resume
+            that has to pass a text-extraction check before it ships.
+          </p>
+          <div class="tags">
+            <span>Python</span><span>LaTeX / tectonic</span><span>Agent orchestration</span><span>Browser automation</span>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="n">0.98 s</span>
+          <span class="k">to filter 2,060 postings, on zero model tokens</span>
+        </div>
+        <span class="go">Read the case study &rarr;</span>
+      </a>
+
+      <a class="proj reveal" href="kalshi.html">
+        <span class="idx">02</span>
+        <div>
+          <h3>Kalshi Sentiment Predictor</h3>
+          <p class="blurb">
+            An LLM-driven AutoML loop searching for signal in prediction-market
+            sentiment. It found a result that beat the baseline, then an audit
+            found the leak underneath it — so the paper reports the null.
+          </p>
+          <div class="tags">
+            <span>PyTorch</span><span>FinBERT</span><span>XGBoost</span><span>AutoML</span><span>NeurIPS-format paper</span>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="n">2 / 32</span>
+          <span class="k">test ticker prefixes present in train — the leak that killed the win</span>
+        </div>
+        <span class="go">Read the case study &rarr;</span>
+      </a>
+
+      <a class="proj reveal" href="https://github.com/damienwin/Basic-Recognition-NeuralNetwork">
+        <span class="idx">03</span>
+        <div>
+          <h3>Deep Neural Network, from scratch</h3>
+          <p class="blurb">
+            A modular network in NumPy with no framework underneath it —
+            backprop, AdamW, dropout and L2 written by hand to understand what
+            the frameworks are doing.
+          </p>
+          <div class="tags">
+            <span>Python</span><span>NumPy</span><span>Optimization</span>
+          </div>
+        </div>
+        <div class="stat">
+          <span class="n">25–45%</span>
+          <span class="k">faster backprop after cutting allocations in the inner kernels</span>
+        </div>
+        <span class="go">View the source &rarr;</span>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="head reveal">
+      <div class="eyebrow">Experience</div>
+      <h2>Where the practice came from.</h2>
+    </div>
+    <table class="xp reveal">
+      <tbody>
+        <tr>
+          <td class="org">Amazon Web Services</td>
+          <td class="role">Software Development Engineer Intern, Supply Chain</td>
+          <td class="when">May – Aug 2026</td>
+        </tr>
+        <tr>
+          <td class="org">BASF</td>
+          <td class="role">Data Science Intern</td>
+          <td class="when">May – Aug 2025</td>
+        </tr>
+        <tr>
+          <td class="org">Shell</td>
+          <td class="role">Machine Learning Intern</td>
+          <td class="when">Jan – May 2025</td>
+        </tr>
+        <tr>
+          <td class="org">LSU Biomechanics</td>
+          <td class="role">Undergraduate Researcher</td>
+          <td class="when">Jan 2024 – present</td>
+        </tr>
+        <tr>
+          <td class="org">LSU Computer Science</td>
+          <td class="role">Undergraduate Teaching &amp; Research Assistant</td>
+          <td class="when">Aug 2023 – Aug 2024</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <div class="container foot">
+    <div class="links">
+      <a href="mailto:nguyendamien05@gmail.com">Email</a>
+      <a href="https://github.com/damienwin">GitHub</a>
+      <a href="https://linkedin.com/in/damienhnguyen">LinkedIn</a>
+    </div>
+    <span class="fine">Baton Rouge, LA · LSU Computer Engineering, May 2027</span>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var els = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
+    var queued = false;
+    function check() {
+      queued = false;
+      var h = window.innerHeight;
+      for (var i = els.length - 1; i >= 0; i--) {
+        if (els[i].getBoundingClientRect().top < h * 0.94) {
+          els[i].classList.add("in");
+          els.splice(i, 1);
+        }
+      }
+    }
+    function queue() { if (!queued) { queued = true; requestAnimationFrame(check); } }
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    window.addEventListener("load", check);
+    check();
+    setTimeout(check, 400);
+  })();
+</script>
+</body>
+</html>

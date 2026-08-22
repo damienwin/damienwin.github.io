@@ -1,0 +1,1075 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="An agentic pipeline that scans job boards, tailors a one-page LaTeX resume per posting, and verifies it against an ATS before it ships." />
+<title>Resume Tailorer — Damien Nguyen</title>
+<script>document.documentElement.className += " js";</script>
+<style>
+  :root {
+    --ground: #f7f6f3;
+    --surface: #ffffff;
+    --sunk: #efede8;
+    --ink: #14171d;
+    --ink-2: #565c68;
+    --ink-3: #8a8f9b;
+    --rule: #e2dfd8;
+    --accent: #2f52e0;
+    --accent-2: #6b86f0;
+    --accent-soft: #e8ecfd;
+    --warn: #b4720e;
+    --good: #137a54;
+    --hero-top: #080b10;
+    --hero-mid: #141a26;
+    --card-shadow: 0 1px 2px rgba(20, 23, 29, 0.04), 0 12px 34px rgba(20, 23, 29, 0.07);
+    --pill-glow: 0 4px 20px rgba(47, 82, 224, 0.35);
+
+    --display: "Hoefler Text", Baskerville, "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0c0f14;
+      --surface: #12161d;
+      --sunk: #171c24;
+      --ink: #e9ebf0;
+      --ink-2: #9aa2b1;
+      --ink-3: #6f7787;
+      --rule: #232935;
+      --accent: #8da3ff;
+      --accent-2: #6b86f0;
+      --accent-soft: #172038;
+      --warn: #d5a05a;
+      --good: #4fbf93;
+      --hero-top: #05070a;
+      --hero-mid: #0a0d13;
+      --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 40px rgba(0, 0, 0, 0.45);
+      --pill-glow: 0 4px 22px rgba(141, 163, 255, 0.28);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0c0f14;
+    --surface: #12161d;
+    --sunk: #171c24;
+    --ink: #e9ebf0;
+    --ink-2: #9aa2b1;
+    --ink-3: #6f7787;
+    --rule: #232935;
+    --accent: #8da3ff;
+    --accent-2: #6b86f0;
+    --accent-soft: #172038;
+    --warn: #d5a05a;
+    --good: #4fbf93;
+    --hero-top: #05070a;
+    --hero-mid: #0a0d13;
+    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 40px rgba(0, 0, 0, 0.45);
+    --pill-glow: 0 4px 22px rgba(141, 163, 255, 0.28);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16.5px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+  .col { max-width: 62ch; }
+
+  p { margin: 0 0 1em; }
+  p:last-child { margin-bottom: 0; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  /* ---------------- nav ---------------- */
+
+  nav.top {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 28px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  nav.top .brand {
+    font-family: var(--display);
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 400ms ease;
+  }
+  nav.top .brand .mark {
+    width: 9px; height: 9px;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  nav.top .back {
+    font-family: var(--sans);
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.62);
+    text-decoration: none;
+    transition: color 400ms ease;
+  }
+  nav.top .back:hover { color: #fff; }
+
+  /* Past the hero the bar is transparent over live content, so the text
+     elements retire and only the pill stays — nothing can collide. */
+  nav.top .brand, nav.top .back { transition: opacity 320ms ease, color 400ms ease; }
+  nav.top[data-past="true"] .brand,
+  nav.top[data-past="true"] .back { opacity: 0; pointer-events: none; }
+
+  .pill {
+    font-family: var(--sans);
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #fff;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    border-radius: 999px;
+    padding: 9px 20px;
+    text-decoration: none;
+    box-shadow: var(--pill-glow);
+    white-space: nowrap;
+    transition: transform 200ms ease, box-shadow 200ms ease;
+  }
+  .pill:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(47, 82, 224, 0.45); }
+
+  /* ---------------- hero ---------------- */
+
+  .hero {
+    position: relative;
+    min-height: 94vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 150px 28px 210px;
+    /* The light-theme ground is paper, so the hero must stay dark under every
+       piece of hero text and only turn over in the bottom fifth, where the
+       metrics card lands. */
+    background: linear-gradient(180deg,
+      var(--hero-top) 0%,
+      var(--hero-mid) 56%,
+      color-mix(in srgb, var(--hero-mid) 72%, var(--ground)) 82%,
+      var(--ground) 100%);
+    overflow: hidden;
+  }
+  @supports not (background: color-mix(in srgb, red, blue)) {
+    .hero { background: linear-gradient(180deg, var(--hero-top) 0%, var(--hero-mid) 62%, var(--ground) 100%); }
+  }
+
+  .hero canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .hero-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 26px; }
+
+  .hero .kicker {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(2.6rem, 6.4vw, 5rem);
+    line-height: 1.03;
+    letter-spacing: -0.02em;
+    color: #fff;
+    max-width: 15ch;
+  }
+  h1 em { font-style: italic; color: rgba(255, 255, 255, 0.82); }
+
+  .hero .sub {
+    font-size: clamp(1rem, 1.5vw, 1.14rem);
+    color: rgba(255, 255, 255, 0.66);
+    max-width: 52ch;
+    line-height: 1.6;
+  }
+
+  .hero .stack {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .hero .stack span {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    padding: 5px 13px;
+  }
+
+  /* ---------------- headline metrics ---------------- */
+
+  .band { padding: 0; position: relative; }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+  .metric { padding: 30px 28px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid var(--rule); }
+  .metric:last-child { border-right: none; }
+  @media (max-width: 760px) {
+    .metric { border-right: none; border-bottom: 1px solid var(--rule); }
+    .metric:last-child { border-bottom: none; }
+  }
+  .metric .n {
+    font-family: var(--display);
+    font-size: 2.5rem;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+  .metric .n small { font-family: var(--sans); font-size: 1rem; color: var(--ink-2); letter-spacing: 0; }
+  .metric .k { font-size: 0.84rem; color: var(--ink-2); line-height: 1.45; }
+
+  .band-note {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    line-height: 1.65;
+    color: var(--ink-3);
+    max-width: 80ch;
+    margin-top: 18px;
+  }
+
+  /* ---------------- sections ---------------- */
+
+  section { padding: 72px 0; }
+  section.lead { padding-top: 34px; }
+  .section-head { display: flex; flex-direction: column; gap: 14px; margin-bottom: 34px; max-width: 64ch; }
+
+  /* Heading and controls share one row so the diagram card sits as high as
+     the page allows without dropping the section's label. */
+  .head-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px 40px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+  }
+  .head-row .section-head { margin-bottom: 0; }
+  .section-head h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(1.8rem, 3.4vw, 2.7rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+  .section-head p { color: var(--ink-2); font-size: 1.02rem; }
+
+  .js .reveal { opacity: 0; transform: translateY(22px); transition: opacity 700ms ease, transform 700ms ease; }
+  .js .reveal.in { opacity: 1; transform: none; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+  }
+
+  /* ---------------- diagram ---------------- */
+
+  figure { margin: 0; }
+  .figure-scroll { overflow-x: auto; padding: 30px 26px 8px; }
+
+  svg.flowmap { display: block; width: 100%; min-width: 840px; height: auto; color: var(--ink-2); }
+
+  figcaption {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    line-height: 1.6;
+    color: var(--ink-3);
+    padding: 6px 28px 26px;
+    max-width: 78ch;
+  }
+
+  .box { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
+  .node { cursor: pointer; }
+  .node .box { transition: fill 180ms ease, stroke 180ms ease; }
+  .node:hover .box { stroke: var(--accent); }
+  .node[data-active="true"] .box { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+
+  .n-title { font-family: var(--sans); font-size: 14.5px; font-weight: 600; fill: var(--ink); }
+  .n-path { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); }
+  .n-sub { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
+  .node[data-active="true"] .n-path { fill: var(--accent); }
+
+  .agent-shell { fill: none; stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 2 3; }
+  .agent-label { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); letter-spacing: 0.08em; }
+  .flow { stroke: var(--ink-3); stroke-width: 1.5; fill: none; }
+  .flow-label { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-2); }
+  .cond { stroke: var(--warn); stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
+  .cond-label { font-family: var(--mono); font-size: 10.5px; fill: var(--warn); }
+  .muted { opacity: 0.32; }
+
+  .panel {
+    border-top: 1px solid var(--rule);
+    padding: 26px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 176px;
+    background: var(--sunk);
+  }
+  .panel h3 { font-family: var(--sans); font-size: 1.05rem; font-weight: 600; display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .panel p { color: var(--ink-2); font-size: 0.95rem; max-width: 76ch; }
+  .panel .chips { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: auto; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .controls .hint { max-width: 30ch; }
+  button.walk {
+    font-family: var(--sans);
+    font-size: 0.84rem;
+    font-weight: 500;
+    color: #fff;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    border: none;
+    border-radius: 999px;
+    padding: 10px 22px;
+    cursor: pointer;
+    box-shadow: var(--pill-glow);
+  }
+  button.walk:hover { opacity: 0.92; }
+  .hint { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
+
+  /* ---------------- tree ---------------- */
+
+  pre.tree {
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 0.775rem;
+    line-height: 1.9;
+    padding: 26px 24px;
+    overflow-x: auto;
+    color: var(--ink-2);
+  }
+  pre.tree .ln { display: block; padding: 0 8px; border-radius: 3px; transition: background 200ms ease; }
+  pre.tree .ln[data-lit="true"] { background: var(--accent-soft); }
+  pre.tree .ln[data-lit="true"] .c { color: var(--accent); }
+  pre.tree .c { color: var(--ink-3); }
+  pre.tree .d { color: var(--ink); }
+
+  /* ---------------- checks ---------------- */
+
+  ul.checks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; box-shadow: var(--card-shadow); }
+  ul.checks li { background: var(--surface); padding: 24px 26px; display: flex; flex-direction: column; gap: 10px; }
+  ul.checks .tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--good); }
+  ul.checks .tag.flag { color: var(--warn); }
+  ul.checks p { font-size: 0.92rem; color: var(--ink-2); }
+  ul.checks strong { color: var(--ink); font-weight: 600; }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--sunk); padding: 1px 5px; border-radius: 3px; }
+
+  /* ---------------- ledger ---------------- */
+
+  .ledger { display: flex; flex-direction: column; gap: 44px; }
+  .sub-h { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 16px; }
+
+  .funnel { display: flex; flex-direction: column; gap: 3px; }
+  .funnel-row { display: grid; grid-template-columns: 15ch minmax(0, 1fr) 8ch; align-items: center; gap: 16px; font-family: var(--mono); font-size: 0.76rem; }
+  .funnel-row .label { color: var(--ink-2); }
+  .funnel-row .bar { height: 20px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+  .funnel-row .bar span { display: block; height: 100%; background: var(--accent); opacity: 0.9; }
+  .funnel-row .bar span.drop { background: var(--ink-3); opacity: 0.3; }
+  .funnel-row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  table.lt { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.77rem; }
+  table.lt th, table.lt td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); }
+  table.lt th { font-weight: 400; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.68rem; }
+  table.lt td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
+  table.lt td.dim { color: var(--ink-3); }
+
+  .caveat { border-left: 2px solid var(--warn); padding: 4px 0 4px 20px; color: var(--ink-2); font-size: 0.94rem; max-width: 70ch; margin-top: 20px; }
+
+  /* ---------------- footer ---------------- */
+
+  footer { border-top: 1px solid var(--rule); padding: 44px 0 72px; }
+  .foot-grid { display: flex; flex-wrap: wrap; gap: 24px 48px; align-items: baseline; justify-content: space-between; }
+  footer .links { display: flex; flex-wrap: wrap; gap: 22px; font-size: 0.88rem; }
+  footer .links a { color: var(--accent); text-decoration: none; }
+  footer .links a:hover { text-decoration: underline; }
+  footer .fine { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); line-height: 1.7; max-width: 62ch; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+    .js .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+<nav class="top" id="nav">
+  <a class="brand" href="index.html"><span class="mark"></span>Damien Nguyen</a>
+  <a class="back" href="index.html" id="back">&larr; All work</a>
+  <a class="pill" href="https://github.com/damienwin/resume-builder">View source</a>
+</nav>
+
+<div class="hero" id="top">
+  <canvas id="field" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <div class="kicker">Agentic job-application pipeline</div>
+    <h1>Two thousand postings in.<br /><em>One page out.</em></h1>
+    <p class="sub">
+      An orchestrator agent scans job boards, triages them, and hands every
+      surviving posting to its own subagent. Each one tailors a one-page LaTeX
+      resume from a personal knowledge base and refuses to ship it until the
+      extracted text passes an ATS check.
+    </p>
+    <div class="stack">
+      <span>Python</span><span>LaTeX / tectonic</span><span>Agent skills</span>
+      <span>Browser automation</span><span>pdftotext</span>
+    </div>
+  </div>
+</div>
+
+<section class="lead">
+  <div class="container">
+    <div class="head-row reveal">
+      <div class="section-head">
+        <div class="eyebrow">The workflow</div>
+        <h2>One orchestrator, N subagents, one shared verification bar.</h2>
+      </div>
+      <div class="controls">
+        <button class="walk" id="replay" type="button">Walk the workflow</button>
+        <span class="hint" id="hint">Or select any node — the repo tree below highlights in step.</span>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <figure>
+        <div class="figure-scroll">
+          <svg class="flowmap" viewBox="0 0 1160 650" role="img"
+               aria-label="Architecture diagram. Slash commands and AGENTS.md enter the job-scan orchestrator skill, which calls deterministic Python scripts to fetch and filter 2,060 postings in 93 milliseconds using no model tokens. The orchestrator launches one subagent per selected posting in parallel. Each subagent runs an eligibility gate, then the tailor-resume skill, which reads the knowledge base: experience and research files, project files with their repo and demo links, and the profile and education files. The selection is rendered to PDF by tectonic, then an ATS scan checks the extracted text for required keywords, garbled ligatures, and page count, looping back to re-select on failure. The apply step fills the web form using a stored autofill profile holding contact and demographic answers. One subagent skips at its gate and builds no resume. Surviving runs write to the build folder, the resume archive, and the metrics log.">
+            <defs>
+              <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+              </marker>
+              <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)" />
+              </marker>
+            </defs>
+
+            <g class="node" data-node="entry" tabindex="0" role="button" aria-label="Entry points">
+              <rect class="box" x="300" y="16" width="400" height="56" rx="8" />
+              <text class="n-title" x="320" y="40">/start · /job-scan · /tailor · /apply</text>
+              <text class="n-path" x="320" y="58">.claude/commands/ · AGENTS.md for other agents</text>
+            </g>
+            <line class="flow" x1="500" y1="72" x2="500" y2="98" marker-end="url(#ah)" />
+
+            <g class="node" data-node="tools" tabindex="0" role="button" aria-label="Deterministic scripts">
+              <rect class="box" x="16" y="106" width="200" height="60" rx="8" />
+              <text class="n-title" x="34" y="130">Parsers + filter</text>
+              <text class="n-path" x="34" y="148">scripts/*.py · 27 tests</text>
+            </g>
+            <line class="flow" x1="216" y1="136" x2="262" y2="136" marker-end="url(#ah)" />
+            <text class="flow-label" x="16" y="186">2,060 rows · 93 ms · 0 model tokens</text>
+
+            <g class="node" data-node="orchestrator" tabindex="0" role="button" aria-label="Orchestrator skill">
+              <rect class="box" x="270" y="102" width="460" height="68" rx="8" />
+              <text class="n-title" x="292" y="128">job-scan — orchestrator</text>
+              <text class="n-path" x="292" y="147">.claude/skills/job-scan/ · scan · triage · fan out</text>
+            </g>
+
+            <path class="flow" d="M 500 170 L 500 202 M 300 202 L 700 202" />
+            <line class="flow" x1="300" y1="202" x2="300" y2="232" marker-end="url(#ah)" />
+            <line class="flow" x1="500" y1="202" x2="500" y2="232" marker-end="url(#ah)" />
+            <line class="flow" x1="700" y1="202" x2="700" y2="232" marker-end="url(#ah)" />
+            <text class="flow-label" x="716" y="206">one subagent per posting,</text>
+            <text class="flow-label" x="716" y="220">launched together</text>
+
+            <rect class="agent-shell" x="220" y="236" width="160" height="242" rx="10" />
+            <rect class="agent-shell" x="420" y="236" width="160" height="242" rx="10" />
+            <rect class="agent-shell" x="620" y="236" width="160" height="80" rx="10" />
+            <text class="agent-label" x="300" y="256" text-anchor="middle">SUBAGENT 1</text>
+            <text class="agent-label" x="500" y="256" text-anchor="middle">SUBAGENT 2</text>
+            <text class="agent-label" x="700" y="256" text-anchor="middle">SUBAGENT 3</text>
+
+            <g class="node" data-node="gate" tabindex="0" role="button" aria-label="Eligibility gate">
+              <rect class="box" x="232" y="266" width="136" height="30" rx="6" />
+              <text class="n-sub" x="248" y="286">eligibility gate</text>
+              <rect class="box" x="432" y="266" width="136" height="30" rx="6" />
+              <text class="n-sub" x="448" y="286">eligibility gate</text>
+              <rect class="box" x="632" y="266" width="136" height="30" rx="6" />
+              <text class="n-sub" x="648" y="286">eligibility gate</text>
+            </g>
+            <path class="cond" d="M 768 281 L 812 281" marker-end="url(#ahw)" />
+            <text class="cond-label" x="818" y="278">skips —</text>
+            <text class="cond-label" x="818" y="292">cohort mismatch</text>
+            <text class="cond-label" x="700" y="338" text-anchor="middle">no resume built</text>
+
+            <!-- knowledge base: what the tailor actually reads -->
+            <g class="node" data-node="tailor" tabindex="0" role="button" aria-label="Knowledge base inputs">
+              <rect class="box" x="16" y="300" width="180" height="84" rx="8" />
+              <text class="n-title" x="34" y="322">knowledge/</text>
+              <text class="n-sub" x="34" y="341">experience/ research/</text>
+              <text class="n-sub" x="34" y="356">projects/ (repo, demo)</text>
+              <text class="n-sub" x="34" y="371">profile · education</text>
+            </g>
+            <line class="flow" x1="196" y1="323" x2="228" y2="323" marker-end="url(#ah)" />
+            <text class="flow-label" x="16" y="402">scored against the JD</text>
+
+            <g class="node" data-node="tailor" tabindex="0" role="button" aria-label="Tailor resume skill">
+              <rect class="box" x="232" y="308" width="136" height="30" rx="6" />
+              <text class="n-sub" x="248" y="328">tailor-resume</text>
+              <rect class="box" x="432" y="308" width="136" height="30" rx="6" />
+              <text class="n-sub" x="448" y="328">tailor-resume</text>
+            </g>
+
+            <g class="node" data-node="render" tabindex="0" role="button" aria-label="Render to PDF">
+              <rect class="box" x="232" y="350" width="136" height="30" rx="6" />
+              <text class="n-sub" x="248" y="370">render · tectonic</text>
+              <rect class="box" x="432" y="350" width="136" height="30" rx="6" />
+              <text class="n-sub" x="448" y="370">render · tectonic</text>
+            </g>
+
+            <g class="node" data-node="ats" tabindex="0" role="button" aria-label="ATS scan">
+              <rect class="box" x="232" y="392" width="136" height="30" rx="6" />
+              <text class="n-sub" x="248" y="412">ATS scan</text>
+              <rect class="box" x="432" y="392" width="136" height="30" rx="6" />
+              <text class="n-sub" x="448" y="412">ATS scan</text>
+            </g>
+            <path class="cond" d="M 232 414 C 200 404, 200 334, 228 324" marker-end="url(#ahw)" />
+            <path class="cond" d="M 432 414 C 400 404, 400 334, 428 324" marker-end="url(#ahw)" />
+
+            <!-- what the ATS scan actually checks -->
+            <line class="flow" x1="568" y1="407" x2="796" y2="407" marker-end="url(#ah)" />
+            <g class="node" data-node="ats" tabindex="0" role="button" aria-label="What the ATS scan checks">
+              <rect class="box" x="800" y="356" width="344" height="116" rx="8" />
+              <text class="n-title" x="820" y="380">ATS scan — on extracted text</text>
+              <text class="n-sub" x="820" y="400">pdftotext extraction, not the rendered page</text>
+              <text class="n-sub" x="820" y="416">every required JD keyword present</text>
+              <text class="n-sub" x="820" y="432">no garbled ffi/ffl ligatures, no math glyphs</text>
+              <text class="n-sub" x="820" y="448">exactly one page, headings unrenamed</text>
+              <text class="n-sub" x="820" y="464">optional: HackerRank open-source screener</text>
+            </g>
+
+            <g class="node" data-node="apply" tabindex="0" role="button" aria-label="Apply skill">
+              <rect class="box" x="232" y="434" width="136" height="30" rx="6" />
+              <text class="n-sub" x="248" y="454">apply · autofill</text>
+              <rect class="box" x="432" y="434" width="136" height="30" rx="6" />
+              <text class="n-sub" x="448" y="454">apply · autofill</text>
+            </g>
+
+            <!-- demographics and contact for the web form -->
+            <g class="node" data-node="apply" tabindex="0" role="button" aria-label="Autofill profile store">
+              <rect class="box" x="16" y="416" width="180" height="62" rx="8" />
+              <text class="n-title" x="34" y="437">Autofill profile</text>
+              <text class="n-sub" x="34" y="455">contact · demographics</text>
+              <text class="n-sub" x="34" y="470">EEO answers, stored once</text>
+            </g>
+            <line class="flow" x1="196" y1="449" x2="228" y2="449" marker-end="url(#ah)" />
+
+            <path class="flow" d="M 300 478 L 300 496 M 500 478 L 500 496 M 300 496 L 500 496" />
+            <line class="flow" x1="500" y1="496" x2="500" y2="520" marker-end="url(#ah)" />
+
+            <g class="node" data-node="outputs" tabindex="0" role="button" aria-label="Outputs">
+              <rect class="box" x="300" y="524" width="400" height="58" rx="8" />
+              <text class="n-title" x="320" y="548">Archive · metrics log</text>
+              <text class="n-path" x="320" y="566">build/ · Tailored Resumes/ · knowledge/metrics.jsonl</text>
+            </g>
+
+            <text class="cond-label" x="16" y="614">dashed = conditional path: gate skip, or a failed ATS scan sent back to re-select</text>
+          </svg>
+        </div>
+        <figcaption>
+          The fan-out is the point: tailoring N postings costs roughly the wall-clock
+          time of tailoring one. Subagent 3 is drawn as it actually behaves when a
+          posting fails the gate — it reports a reason and produces nothing, rather
+          than burning a tailor run on a job that cannot be taken.
+        </figcaption>
+      </figure>
+
+      <div class="panel">
+        <h3><span class="eyebrow" id="d-kind">Entry</span><span id="d-title">Commands</span></h3>
+        <p id="d-text"></p>
+        <div class="chips" id="d-chips"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="band">
+  <div class="container">
+    <div class="eyebrow reveal" style="margin-bottom:16px;">Measured live</div>
+    <div class="metrics reveal">
+      <div class="metric">
+        <span class="n">0.98<small> s</small></span>
+        <span class="k">Boards fetched, parsed and filtered — 2,060 postings</span>
+      </div>
+      <div class="metric">
+        <span class="n">0</span>
+        <span class="k">Model tokens spent doing it</span>
+      </div>
+      <div class="metric">
+        <span class="n">5.4<small>k</small></span>
+        <span class="k">Agent context per scan, down from 10.8k</span>
+      </div>
+      <div class="metric">
+        <span class="n">N&thinsp;&rarr;&thinsp;1</span>
+        <span class="k">Wall-clock cost of N postings, via parallel subagents</span>
+      </div>
+    </div>
+    <p class="band-note reveal">
+      Latency measured live against both boards, median of 3 runs: 0.89 s network,
+      50 ms parse, 40 ms dedupe and filter. Token counts from the repo's own
+      before/after record. The scan spends nothing on inference because the boards
+      are HTML tables and a parser reads them.
+    </p>
+  </div>
+</div>
+
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">The repository</div>
+      <h2>Every node above is a directory you can open.</h2>
+      <p>
+        Skills hold the prose an agent follows; scripts hold the decisions that
+        should never drift between runs. The split is the design — anything with
+        fixed thresholds and set logic moved out of skill prose and into tested
+        Python.
+      </p>
+    </div>
+
+    <div class="card reveal">
+<pre class="tree" id="tree"><span class="ln"><span class="d">resume-builder/</span></span><span class="ln" data-node="entry">├── AGENTS.md                      <span class="c">entry point for Codex and other agents</span></span><span class="ln"><span class="d">├── .claude/</span></span><span class="ln" data-node="entry">│   ├── commands/                  <span class="c">/start /job-scan /tailor /apply /ats-score</span></span><span class="ln"><span class="d">│   └── skills/</span></span><span class="ln" data-node="orchestrator">│       ├── start/                 <span class="c">setup check, then wraps job-scan</span></span><span class="ln" data-node="orchestrator gate">│       ├── job-scan/              <span class="c">scan, triage, eligibility gate, fan out</span></span><span class="ln" data-node="tailor">│       ├── tailor-resume/         <span class="c">the pipeline itself, person-agnostic</span></span><span class="ln" data-node="ats">│       ├── ats-score/             <span class="c">optional open-source ATS harness</span></span><span class="ln" data-node="apply">│       ├── apply/                 <span class="c">tailor first, then autofill the form</span></span><span class="ln" data-node="apply">│       └── app-profile-sync/      <span class="c">pushes knowledge/ into the autofill store</span></span><span class="ln" data-node="tools">├── scripts/</span><span class="ln" data-node="tools">│   ├── parse_simplify_jobs.py     <span class="c">HTML table parser, 1,812 rows</span></span><span class="ln" data-node="tools">│   ├── parse_speedyapply_jobs.py  <span class="c">second source, merged for new-grad runs</span></span><span class="ln" data-node="tools">│   ├── merge_and_filter_jobs.py   <span class="c">cross-source dedupe + already-applied</span></span><span class="ln" data-node="tools">│   ├── test_merge_and_filter_jobs.py  <span class="c">27 unit tests guarding the filter</span></span><span class="ln" data-node="outputs">│   └── log_metric.py              <span class="c">appends one line per run</span></span><span class="ln" data-node="tailor gate"><span class="d">├── knowledge/</span>                     <span class="c">your history, gitignored, never committed</span></span><span class="ln" data-node="gate tailor apply">│   ├── profile.md education.md    <span class="c">read by the gate for cohort and work auth</span></span><span class="ln" data-node="tailor">│   ├── experience/ research/      <span class="c">one prose file per role</span></span><span class="ln" data-node="tailor">│   ├── projects/                  <span class="c">one per project, carries repo: and demo:</span></span><span class="ln" data-node="outputs">│   └── metrics.jsonl              <span class="c">every figure on this page comes from here</span></span><span class="ln" data-node="tailor render">├── templates/jakes_resume.tex     <span class="c">parameterized LaTeX, ATS-safe rules baked in</span></span><span class="ln" data-node="outputs">├── build/                         <span class="c">generated .tex and .pdf, gitignored</span></span><span class="ln" data-node="ats">├── tools/hiring-agent/            <span class="c">HackerRank's open-source screener, cloned</span></span><span class="ln" data-node="ats">└── eval/                          <span class="c">score cache and A/B results</span></span></pre>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow">The verification bar</div>
+      <h2>Checks that exist because a real PDF failed them.</h2>
+      <p>
+        Verification runs on text extracted from the compiled PDF, not on the PDF as
+        a human sees it. A resume can look perfect in a viewer and still extract as
+        garbage.
+      </p>
+    </div>
+
+    <ul class="checks reveal">
+      <li>
+        <span class="tag">Enforced</span>
+        <p><strong>No math-mode symbols in bullets.</strong> <code>$\to$</code> and
+        <code>$\times$</code> extract as glyphs glued to adjacent digits
+        (<code>63.4s→&lt;100ms</code>), which keyword matchers tokenize wrong.</p>
+      </li>
+      <li>
+        <span class="tag">Enforced</span>
+        <p><strong>No <code>ffi</code>/<code>ffl</code> words where a synonym exists.</strong>
+        The Latin Modern OTF faces drop the ToUnicode mapping for those ligature
+        triples, so "traffic" comes back garbled. It became "burst load".</p>
+      </li>
+      <li>
+        <span class="tag">Enforced</span>
+        <p><strong>No overfull heading row.</strong> A long repo URL beside a long
+        project title collides with no space between cells
+        (<code>NumPygithub.com/...</code>). The title gets shortened; link text stays
+        verbatim.</p>
+      </li>
+      <li>
+        <span class="tag">Enforced</span>
+        <p><strong>Exactly one page, section headings untouched.</strong> Parsers
+        segment on Education / Experience / Projects / Technical Skills, so those
+        four strings are never renamed.</p>
+      </li>
+      <li>
+        <span class="tag flag">Reported</span>
+        <p><strong>Required-keyword coverage.</strong> Misses are reported as gaps
+        rather than papered over. Nothing is ever invented to close one.</p>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="container ledger">
+    <div class="section-head reveal" style="margin-bottom:0;">
+      <div class="eyebrow">Ledger</div>
+      <h2>The numbers behind all of the above.</h2>
+    </div>
+
+    <div class="reveal">
+      <div class="sub-h">Scan funnel — live run, both boards</div>
+      <div class="funnel">
+        <div class="funnel-row"><span class="label">fetched</span><span class="bar"><span style="width:100%"></span></span><span class="n">2,060</span></div>
+        <div class="funnel-row"><span class="label">closed</span><span class="bar"><span class="drop" style="width:71.6%"></span></span><span class="n">-1,474</span></div>
+        <div class="funnel-row"><span class="label">cross-source dup</span><span class="bar"><span class="drop" style="width:0.4%"></span></span><span class="n">-0</span></div>
+        <div class="funnel-row"><span class="label">already applied</span><span class="bar"><span class="drop" style="width:0.4%"></span></span><span class="n">-0</span></div>
+        <div class="funnel-row"><span class="label">outside window</span><span class="bar"><span class="drop" style="width:27.8%"></span></span><span class="n">-573</span></div>
+        <div class="funnel-row"><span class="label">surfaced</span><span class="bar"><span style="width:2%"></span></span><span class="n">13</span></div>
+      </div>
+    </div>
+
+    <div class="reveal">
+      <div class="sub-h">Agent context, before and after moving logic into scripts</div>
+      <table class="lt">
+        <thead><tr><th>Path</th><th class="num">Before</th><th class="num">After</th><th class="num">Change</th></tr></thead>
+        <tbody>
+          <tr><td>job-scan</td><td class="num">10,793</td><td class="num">5,368</td><td class="num">-50%</td></tr>
+          <tr><td>tailor-resume</td><td class="num">7,320</td><td class="num">5,727</td><td class="num">-22%</td></tr>
+          <tr><td>full /start path</td><td class="num">16,387</td><td class="num">11,705</td><td class="num">-29%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="reveal">
+      <div class="sub-h">Recorded runs, 2026-08-10 to 2026-08-22</div>
+      <table class="lt">
+        <thead><tr><th>Event</th><th class="num">Count</th><th>Detail</th></tr></thead>
+        <tbody>
+          <tr><td>resumes tailored</td><td class="num">52</td><td class="dim">40 distinct roles</td></tr>
+          <tr><td>keyword coverage</td><td class="num">73%</td><td class="dim">202 of 278 required strings; 17 runs at 100%</td></tr>
+          <tr><td>applications filled</td><td class="num">31</td><td class="dim">25 reached human review, 6 failed</td></tr>
+          <tr><td>ATS platforms</td><td class="num">6</td><td class="dim">Greenhouse, Ashby, Lever, Workday, Rippling, LinkedIn</td></tr>
+          <tr><td>auto-submitted</td><td class="num">0</td><td class="dim">by design — always stops at final review</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="reveal">
+      <div class="sub-h">Scoring against HackerRank's open-source screener</div>
+      <table class="lt">
+        <thead><tr><th>Measure</th><th class="num">Value</th><th>Reading</th></tr></thead>
+        <tbody>
+          <tr><td>missing-link deduction, before</td><td class="num">5 / 9</td><td class="dim">runs penalizing an unlinked project</td></tr>
+          <tr><td>missing-link deduction, after</td><td class="num">0 / 9</td><td class="dim">structural fix: render the link</td></tr>
+          <tr><td>scorer spread, one fixed PDF</td><td class="num">66–99</td><td class="dim">published non-determinism</td></tr>
+          <tr><td>context A/B, N=9 per PDF</td><td class="num">0</td><td class="dim">median delta; 95% CI [-2, +1]</td></tr>
+        </tbody>
+      </table>
+      <p class="caveat">
+        The same scorer gave one unchanged PDF anywhere from 66 to 99 across 100
+        public runs — wider than almost any change worth making. So the A/B above
+        ran 54 scoring runs and still concluded "no detectable difference" rather
+        than claiming a win. Chasing a number this noisy is how you end up
+        optimizing for an instrument instead of a reader.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container foot-grid">
+    <div class="links">
+      <a href="index.html">All work</a>
+      <a href="kalshi.html">Kalshi Sentiment Predictor</a>
+      <a href="https://github.com/damienwin/resume-builder">Source</a>
+      <a href="https://github.com/damienwin">GitHub</a>
+      <a href="https://linkedin.com/in/damienhnguyen">LinkedIn</a>
+    </div>
+    <p class="fine">
+      Latency measured live at build time; all other figures read from the
+      pipeline's own metrics log. Employer names deliberately omitted.
+    </p>
+  </div>
+</footer>
+
+<script>
+  /* ---------------- hero field ---------------- */
+  (function () {
+    var canvas = document.getElementById("field");
+    var ctx = canvas.getContext("2d");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var parts = [];
+    var W = 0, H = 0, dpr = 1;
+    var COUNT = 700;
+    var PICKED = 13;
+
+    function size() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      W = canvas.clientWidth;
+      H = canvas.clientHeight;
+      canvas.width = Math.floor(W * dpr);
+      canvas.height = Math.floor(H * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function seed() {
+      parts = [];
+      for (var i = 0; i < COUNT; i++) {
+        parts.push({
+          t: Math.random(),
+          off: (Math.random() * 2 - 1),
+          drift: (Math.random() * 2 - 1) * 0.28,
+          v: 0.00016 + Math.random() * 0.00042,
+          r: Math.random() < 0.14 ? 1.7 : 1.1,
+          picked: i < PICKED
+        });
+      }
+    }
+
+    /* funnel half-width at vertical position t (0 top, 1 bottom) */
+    function spread(t) {
+      var e = Math.pow(t, 1.9);
+      return (0.5 - 0.47 * e) * W;
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+
+      /* glow where the page compiles */
+      var gx = W / 2, gy = H * 0.9;
+      var g = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.min(W, H) * 0.34);
+      g.addColorStop(0, "rgba(255,255,255,0.20)");
+      g.addColorStop(0.45, "rgba(140,170,255,0.09)");
+      g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        var t = p.t;
+        var x = W / 2 + p.off * spread(t) + p.drift * 40 * Math.sin(t * 3.1 + i);
+        var y = t * H;
+
+        /* fade out as the ground turns to paper near the bottom */
+        var fade = t < 0.06 ? t / 0.06 : (t > 0.74 ? Math.max(0, 1 - (t - 0.74) / 0.2) : 1);
+        var a = fade * (0.16 + 0.4 * (1 - t));
+
+        if (p.picked) {
+          ctx.fillStyle = "rgba(150,180,255," + Math.min(0.95, a * 3.2) + ")";
+          ctx.fillRect(x - p.r, y - p.r, p.r * 2.4, p.r * 2.4);
+        } else {
+          ctx.fillStyle = "rgba(255,255,255," + a + ")";
+          ctx.fillRect(x, y, p.r, p.r);
+        }
+      }
+    }
+
+    function step() {
+      for (var i = 0; i < parts.length; i++) {
+        var p = parts[i];
+        p.t += p.v;
+        if (p.t > 1) { p.t = 0; p.off = Math.random() * 2 - 1; }
+      }
+      draw();
+      raf = requestAnimationFrame(step);
+    }
+
+    var raf = null;
+    function boot() {
+      size();
+      seed();
+      if (reduce) { draw(); return; }
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(step);
+    }
+
+    var rt = null;
+    window.addEventListener("resize", function () {
+      clearTimeout(rt);
+      rt = setTimeout(boot, 180);
+    });
+    boot();
+  })();
+
+  /* ---------------- nav state ---------------- */
+  (function () {
+    var nav = document.getElementById("nav");
+    var hero = document.getElementById("top");
+    function onScroll() {
+      var past = window.scrollY > hero.offsetHeight - 90;
+      nav.setAttribute("data-past", past ? "true" : "false");
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  })();
+
+  /* ---------------- scroll reveal ---------------- */
+  (function () {
+    var els = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
+    var queued = false;
+
+    /* Position-based rather than intersection-based: an element scrolled past
+       before a callback fires still reveals, so content can never get stranded
+       invisible on a fast scroll or a restored scroll position. */
+    function check() {
+      queued = false;
+      var h = window.innerHeight;
+      for (var i = els.length - 1; i >= 0; i--) {
+        if (els[i].getBoundingClientRect().top < h * 0.94) {
+          els[i].classList.add("in");
+          els.splice(i, 1);
+        }
+      }
+    }
+    function queue() {
+      if (!queued) { queued = true; requestAnimationFrame(check); }
+    }
+    window.addEventListener("scroll", queue, { passive: true });
+    window.addEventListener("resize", queue);
+    window.addEventListener("load", check);
+    check();
+    setTimeout(check, 400);
+  })();
+
+  /* ---------------- diagram ---------------- */
+  var NODES = {
+    entry: {
+      kind: "Entry",
+      title: "Commands and agent entry points",
+      text: "Thin wrappers, one per command, so the same skill prose serves Claude Code and any other agent. AGENTS.md points a tool-agnostic agent at the identical pipeline, which is why the workflow is not locked to one harness. /start is the guided path: it checks the knowledge base is filled in, then hands straight to the orchestrator.",
+      chips: [".claude/commands/", "AGENTS.md"]
+    },
+    tools: {
+      kind: "Deterministic",
+      title: "Parsers and the filter",
+      text: "Two boards are fetched and parsed as HTML tables by plain Python, then merged, deduplicated across sources, and checked against the archive of resumes already generated. Fixed thresholds, same answer every run, no inference cost. Moving this out of skill prose caught two real bugs: postings inside a single source were being deduplicated against each other, losing 149 per scan, and the already-applied check could never fire because it matched role titles against filenames that never contained them.",
+      chips: ["scripts/parse_simplify_jobs.py", "scripts/merge_and_filter_jobs.py", "27 unit tests"]
+    },
+    orchestrator: {
+      kind: "Orchestrator",
+      title: "job-scan",
+      text: "Asks for board, categories and recency window, calls the parsers, prints one compact table, and confirms it looks right before acting. Nothing is tailored or submitted without that confirmation. On approval it launches one subagent per selected posting, all at once rather than in sequence.",
+      chips: [".claude/skills/job-scan/", "scan · triage · fan out"]
+    },
+    gate: {
+      kind: "Per subagent",
+      title: "Eligibility gate",
+      text: "Before spending a tailor run, each subagent reads the posting for hard blockers — citizenship or clearance requirements, degree level, graduation-year cohort — and checks them against the profile. A blocked posting is skipped with a stated reason. A years-of-experience minimum deliberately never blocks: that one is worth applying past.",
+      chips: ["knowledge/profile.md", "knowledge/education.md"]
+    },
+    tailor: {
+      kind: "Per subagent",
+      title: "tailor-resume, and what it reads",
+      text: "The knowledge base is prose, not a form: one file per role under experience/ and research/, one per project under projects/ carrying its repo and demo links, plus profile and education for identity, contact and coursework. All of it is read in a single parallel batch, then every entry is scored against the job description and the highest-scoring set that fits exactly one page is selected — three to four roles, one to two projects, filtered skills. Bullets mirror the posting's vocabulary where that is truthful, and nothing is invented: an unsupported requirement is reported as a gap instead.",
+      chips: ["knowledge/experience/", "knowledge/projects/", "knowledge/profile.md", "knowledge/education.md"]
+    },
+    render: {
+      kind: "Per subagent",
+      title: "Render to PDF",
+      text: "The selection fills a parameterized LaTeX template and tectonic compiles it. The template carries the ATS-safety rules as hard constraints rather than suggestions: no math-mode symbols in bullet text, no ffi or ffl ligature words where a synonym exists, and no heading row wide enough to overflow its column and collide with the link beside it.",
+      chips: ["templates/jakes_resume.tex", "tectonic"]
+    },
+    ats: {
+      kind: "Per subagent",
+      title: "ATS scan",
+      text: "The compiled PDF is read back through pdftotext and checked the way a parser would see it, not the way a person does: every required keyword from the posting present in the extracted string, no garbled ligatures, exactly one page, section headings unrenamed so a parser can still segment it. A failed check loops back to selection rather than shipping. Optionally the PDF is also scored against HackerRank's open-sourced screening model for directional feedback.",
+      chips: ["pdftotext", "tools/hiring-agent/", "loops back on failure"]
+    },
+    apply: {
+      kind: "Per subagent",
+      title: "apply",
+      text: "Opens the posting in its own browser tab and fills the form across six ATS platforms, attaching the resume tailored for that exact posting and never a stale one. Contact details and the voluntary demographic and EEO answers come from a stored autofill profile synced out of knowledge/, so the same answers go to every employer rather than being retyped. It always stops at the final review screen — a wrong answer submitted on a real application cannot be taken back, so the last click stays human.",
+      chips: ["job-apply plugin", "~/.job-apply profile", "never auto-submits"]
+    },
+    outputs: {
+      kind: "Output",
+      title: "Archive and metrics",
+      text: "Each run writes the compiled PDF, archives it under the company and role it was built for, and appends one JSON line recording what was selected and what the keyword check found. That log is what the already-applied filter reads on the next scan, and it is where every number on this page comes from.",
+      chips: ["build/", "Tailored Resumes/", "knowledge/metrics.jsonl"]
+    }
+  };
+
+  var ORDER = ["entry", "tools", "orchestrator", "gate", "tailor", "render", "ats", "apply", "outputs"];
+
+  var groups = Array.prototype.slice.call(document.querySelectorAll(".node"));
+  var lines = Array.prototype.slice.call(document.querySelectorAll("#tree .ln"));
+  var dKind = document.getElementById("d-kind");
+  var dTitle = document.getElementById("d-title");
+  var dText = document.getElementById("d-text");
+  var dChips = document.getElementById("d-chips");
+  var replayBtn = document.getElementById("replay");
+  var hint = document.getElementById("hint");
+  var timer = null;
+
+  function show(key) {
+    var n = NODES[key];
+    groups.forEach(function (g) {
+      g.setAttribute("data-active", g.getAttribute("data-node") === key ? "true" : "false");
+    });
+    lines.forEach(function (l) {
+      var tags = (l.getAttribute("data-node") || "").split(" ");
+      l.setAttribute("data-lit", tags.indexOf(key) !== -1 ? "true" : "false");
+    });
+    dKind.textContent = n.kind;
+    dTitle.textContent = n.title;
+    dText.textContent = n.text;
+    dChips.textContent = "";
+    n.chips.forEach(function (c) {
+      var el = document.createElement("span");
+      el.textContent = c;
+      dChips.appendChild(el);
+    });
+  }
+
+  function stopWalk() {
+    if (timer) { clearInterval(timer); timer = null; }
+    replayBtn.textContent = "Walk the workflow";
+    hint.textContent = "Or select any node — the repo tree below highlights in step.";
+  }
+
+  groups.forEach(function (g) {
+    var key = g.getAttribute("data-node");
+    function pick() { stopWalk(); show(key); }
+    g.addEventListener("click", pick);
+    g.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); }
+    });
+  });
+
+  replayBtn.addEventListener("click", function () {
+    if (timer) { stopWalk(); return; }
+    var i = 0;
+    show(ORDER[0]);
+    replayBtn.textContent = "Stop";
+    hint.textContent = "Stepping through the workflow.";
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    timer = setInterval(function () {
+      i += 1;
+      if (i >= ORDER.length) { stopWalk(); return; }
+      show(ORDER[i]);
+    }, reduce ? 2800 : 1700);
+  });
+
+  show("entry");
+</script>
+</body>
+</html>
