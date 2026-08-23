@@ -323,7 +323,7 @@
   figure { margin: 0; }
   .figure-scroll { overflow-x: auto; padding: 30px 26px 8px; }
 
-  svg.flowmap { display: block; width: 100%; min-width: 840px; height: auto; color: var(--ink-2); }
+  svg.flowmap { display: block; width: 100%; min-width: 760px; height: auto; color: var(--ink-2); }
 
   figcaption {
     font-family: var(--mono);
@@ -341,9 +341,7 @@
   .node[data-active="true"] .box { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
 
   .n-title { font-family: var(--sans); font-size: 14.5px; font-weight: 600; fill: var(--ink); }
-  .n-path { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); }
   .n-sub { font-family: var(--mono); font-size: 11px; fill: var(--ink-2); }
-  .node[data-active="true"] .n-path { fill: var(--accent); }
 
   .agent-shell { fill: none; stroke: var(--rule); stroke-width: 1.5; stroke-dasharray: 2 3; }
   .agent-label { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); letter-spacing: 0.08em; }
@@ -491,8 +489,8 @@
     <div class="card">
       <figure>
         <div class="figure-scroll">
-          <svg class="flowmap" viewBox="0 0 1160 650" role="img"
-               aria-label="Architecture diagram. Slash commands and AGENTS.md enter the job-scan orchestrator skill, which calls deterministic Python scripts to fetch and filter 2,060 postings in 93 milliseconds using no model tokens. The orchestrator launches one subagent per selected posting in parallel. Each subagent runs an eligibility gate, then the tailor-resume skill, which reads the knowledge base: experience and research files, project files with their repo and demo links, and the profile and education files. The selection is rendered to PDF by tectonic, then an ATS scan checks the extracted text for required keywords, garbled ligatures, and page count, looping back to re-select on failure. The apply step fills the web form using a stored autofill profile holding contact and demographic answers. One subagent skips at its gate and builds no resume. Surviving runs write to the build folder, the resume archive, and the metrics log.">
+          <svg class="flowmap" viewBox="0 0 1000 650" role="img"
+               aria-label="Diagram of the pipeline. Slash commands and an agents file are the entry point. Deterministic parser scripts fetch and filter job boards, then hand the surviving postings to an orchestrator skill. The orchestrator launches one subagent per posting, all in parallel; a single column stands for the N identical subagents. Each subagent runs an eligibility gate, tailors a resume from the knowledge base, renders it with tectonic, scans the extracted text against the job description, and autofills the application. A posting that fails the gate is skipped and no resume is built. Accepted runs land in the archive and the metrics log.">
             <defs>
               <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
@@ -503,52 +501,46 @@
             </defs>
 
             <g class="node" data-node="entry" tabindex="0" role="button" aria-label="Entry points">
-              <rect class="box" x="300" y="16" width="400" height="56" rx="8" />
-              <text class="n-title" x="320" y="40">/start · /job-scan · /tailor · /apply</text>
-              <text class="n-path" x="320" y="58">.claude/commands/ · AGENTS.md for other agents</text>
+              <rect class="box" x="300" y="16" width="400" height="44" rx="8" />
+              <text class="n-title" x="320" y="43">Commands</text>
             </g>
-            <line class="flow" x1="500" y1="72" x2="500" y2="98" marker-end="url(#ah)" />
+            <line class="flow" x1="500" y1="60" x2="500" y2="98" marker-end="url(#ah)" />
 
             <g class="node" data-node="tools" tabindex="0" role="button" aria-label="Deterministic scripts">
-              <rect class="box" x="16" y="106" width="200" height="60" rx="8" />
-              <text class="n-title" x="34" y="130">Parsers + filter</text>
-              <text class="n-path" x="34" y="148">scripts/*.py · 27 tests</text>
+              <rect class="box" x="16" y="106" width="200" height="44" rx="8" />
+              <text class="n-title" x="34" y="133">Parsers + filter</text>
             </g>
-            <line class="flow" x1="216" y1="136" x2="262" y2="136" marker-end="url(#ah)" />
-            <text class="flow-label" x="16" y="186">2,060 rows · 93 ms · 0 model tokens</text>
+            <line class="flow" x1="216" y1="128" x2="262" y2="128" marker-end="url(#ah)" />
+            <text class="flow-label" x="16" y="170">2,060 rows · 93 ms · 0 model tokens</text>
 
             <g class="node" data-node="orchestrator" tabindex="0" role="button" aria-label="Orchestrator skill">
-              <rect class="box" x="270" y="102" width="460" height="68" rx="8" />
-              <text class="n-title" x="292" y="128">job-scan — orchestrator</text>
-              <text class="n-path" x="292" y="147">.claude/skills/job-scan/ · scan · triage · fan out</text>
+              <rect class="box" x="270" y="106" width="460" height="44" rx="8" />
+              <text class="n-title" x="292" y="133">Orchestrator</text>
             </g>
 
-            <path class="flow" d="M 500 170 L 500 202 M 300 202 L 700 202" />
+            <path class="flow" d="M 500 150 L 500 202 M 300 202 L 500 202" />
             <line class="flow" x1="300" y1="202" x2="300" y2="232" marker-end="url(#ah)" />
             <line class="flow" x1="500" y1="202" x2="500" y2="232" marker-end="url(#ah)" />
-            <line class="flow" x1="700" y1="202" x2="700" y2="232" marker-end="url(#ah)" />
-            <text class="flow-label" x="716" y="206">one subagent per posting,</text>
-            <text class="flow-label" x="716" y="220">launched together</text>
+            <text class="flow-label" x="596" y="206">launched together,</text>
+            <text class="flow-label" x="596" y="220">one per posting</text>
 
+            <rect class="agent-shell" x="232" y="230" width="160" height="242" rx="10" opacity=".35" />
+            <rect class="agent-shell" x="226" y="233" width="160" height="242" rx="10" opacity=".6" />
             <rect class="agent-shell" x="220" y="236" width="160" height="242" rx="10" />
-            <rect class="agent-shell" x="420" y="236" width="160" height="242" rx="10" />
-            <rect class="agent-shell" x="620" y="236" width="160" height="80" rx="10" />
-            <text class="agent-label" x="300" y="256" text-anchor="middle">SUBAGENT 1</text>
-            <text class="agent-label" x="500" y="256" text-anchor="middle">SUBAGENT 2</text>
-            <text class="agent-label" x="700" y="256" text-anchor="middle">SUBAGENT 3</text>
+            <rect class="agent-shell" x="420" y="236" width="160" height="80" rx="10" />
+            <text class="agent-label" x="300" y="256" text-anchor="middle">SUBAGENT × N</text>
+            <text class="agent-label" x="500" y="256" text-anchor="middle">SKIPPED</text>
 
             <g class="node" data-node="gate" tabindex="0" role="button" aria-label="Eligibility gate">
               <rect class="box" x="232" y="266" width="136" height="30" rx="6" />
               <text class="n-sub" x="248" y="286">eligibility gate</text>
               <rect class="box" x="432" y="266" width="136" height="30" rx="6" />
               <text class="n-sub" x="448" y="286">eligibility gate</text>
-              <rect class="box" x="632" y="266" width="136" height="30" rx="6" />
-              <text class="n-sub" x="648" y="286">eligibility gate</text>
             </g>
-            <path class="cond" d="M 768 281 L 812 281" marker-end="url(#ahw)" />
-            <text class="cond-label" x="818" y="278">skips —</text>
-            <text class="cond-label" x="818" y="292">cohort mismatch</text>
-            <text class="cond-label" x="700" y="338" text-anchor="middle">no resume built</text>
+            <path class="cond" d="M 568 281 L 612 281" marker-end="url(#ahw)" />
+            <text class="cond-label" x="618" y="278">skips —</text>
+            <text class="cond-label" x="618" y="292">cohort mismatch</text>
+            <text class="cond-label" x="500" y="338" text-anchor="middle">no resume built</text>
 
             <!-- knowledge base: what the tailor actually reads -->
             <g class="node" data-node="tailor" tabindex="0" role="button" aria-label="Knowledge base inputs">
@@ -564,43 +556,34 @@
             <g class="node" data-node="tailor" tabindex="0" role="button" aria-label="Tailor resume skill">
               <rect class="box" x="232" y="308" width="136" height="30" rx="6" />
               <text class="n-sub" x="248" y="328">tailor-resume</text>
-              <rect class="box" x="432" y="308" width="136" height="30" rx="6" />
-              <text class="n-sub" x="448" y="328">tailor-resume</text>
             </g>
 
             <g class="node" data-node="render" tabindex="0" role="button" aria-label="Render to PDF">
               <rect class="box" x="232" y="350" width="136" height="30" rx="6" />
               <text class="n-sub" x="248" y="370">render · tectonic</text>
-              <rect class="box" x="432" y="350" width="136" height="30" rx="6" />
-              <text class="n-sub" x="448" y="370">render · tectonic</text>
             </g>
 
             <g class="node" data-node="ats" tabindex="0" role="button" aria-label="ATS scan">
               <rect class="box" x="232" y="392" width="136" height="30" rx="6" />
               <text class="n-sub" x="248" y="412">ATS scan</text>
-              <rect class="box" x="432" y="392" width="136" height="30" rx="6" />
-              <text class="n-sub" x="448" y="412">ATS scan</text>
             </g>
             <path class="cond" d="M 232 414 C 200 404, 200 334, 228 324" marker-end="url(#ahw)" />
-            <path class="cond" d="M 432 414 C 400 404, 400 334, 428 324" marker-end="url(#ahw)" />
 
             <!-- what the ATS scan actually checks -->
-            <line class="flow" x1="568" y1="407" x2="796" y2="407" marker-end="url(#ah)" />
+            <line class="flow" x1="368" y1="407" x2="646" y2="407" marker-end="url(#ah)" />
             <g class="node" data-node="ats" tabindex="0" role="button" aria-label="What the ATS scan checks">
-              <rect class="box" x="800" y="356" width="344" height="116" rx="8" />
-              <text class="n-title" x="820" y="380">ATS scan — on extracted text</text>
-              <text class="n-sub" x="820" y="400">pdftotext extraction, not the rendered page</text>
-              <text class="n-sub" x="820" y="416">every required JD keyword present</text>
-              <text class="n-sub" x="820" y="432">no garbled ffi/ffl ligatures, no math glyphs</text>
-              <text class="n-sub" x="820" y="448">exactly one page, headings unrenamed</text>
-              <text class="n-sub" x="820" y="464">optional: HackerRank open-source screener</text>
+              <rect class="box" x="650" y="356" width="330" height="116" rx="8" />
+              <text class="n-title" x="670" y="380">ATS scan — on extracted text</text>
+              <text class="n-sub" x="670" y="400">pdftotext extraction, not the rendered page</text>
+              <text class="n-sub" x="670" y="416">every required JD keyword present</text>
+              <text class="n-sub" x="670" y="432">no garbled ffi/ffl ligatures, no math glyphs</text>
+              <text class="n-sub" x="670" y="448">exactly one page, headings unrenamed</text>
+              <text class="n-sub" x="670" y="464">optional: HackerRank open-source screener</text>
             </g>
 
             <g class="node" data-node="apply" tabindex="0" role="button" aria-label="Apply skill">
               <rect class="box" x="232" y="434" width="136" height="30" rx="6" />
               <text class="n-sub" x="248" y="454">apply · autofill</text>
-              <rect class="box" x="432" y="434" width="136" height="30" rx="6" />
-              <text class="n-sub" x="448" y="454">apply · autofill</text>
             </g>
 
             <!-- demographics and contact for the web form -->
@@ -612,23 +595,23 @@
             </g>
             <line class="flow" x1="196" y1="449" x2="228" y2="449" marker-end="url(#ah)" />
 
-            <path class="flow" d="M 300 478 L 300 496 M 500 478 L 500 496 M 300 496 L 500 496" />
+            <path class="flow" d="M 300 478 L 300 496 L 500 496" />
             <line class="flow" x1="500" y1="496" x2="500" y2="520" marker-end="url(#ah)" />
 
             <g class="node" data-node="outputs" tabindex="0" role="button" aria-label="Outputs">
-              <rect class="box" x="300" y="524" width="400" height="58" rx="8" />
-              <text class="n-title" x="320" y="548">Archive · metrics log</text>
-              <text class="n-path" x="320" y="566">build/ · Tailored Resumes/ · knowledge/metrics.jsonl</text>
+              <rect class="box" x="300" y="524" width="400" height="44" rx="8" />
+              <text class="n-title" x="320" y="551">Archive · metrics log</text>
             </g>
 
-            <text class="cond-label" x="16" y="614">dashed = conditional path: gate skip, or a failed ATS scan sent back to re-select</text>
+            <text class="cond-label" x="16" y="600">dashed = conditional path: gate skip, or a failed ATS scan sent back to re-select</text>
           </svg>
         </div>
         <figcaption>
           The fan-out is the point: tailoring N postings costs roughly the wall-clock
-          time of tailoring one. Subagent 3 is drawn as it actually behaves when a
-          posting fails the gate — it reports a reason and produces nothing, rather
-          than burning a tailor run on a job that cannot be taken.
+          time of tailoring one, so one column stands for all N. The skipped column is
+          drawn as it actually behaves when a posting fails the gate — it reports a
+          reason and produces nothing, rather than burning a tailor run on a job that
+          cannot be taken.
         </figcaption>
       </figure>
 
