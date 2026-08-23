@@ -412,6 +412,7 @@
   ul.checks li { background: var(--surface); padding: 24px 26px; display: flex; flex-direction: column; gap: 10px; }
   ul.checks .tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--good); }
   ul.checks .tag.flag { color: var(--warn); }
+  ul.checks .tag.opt { color: var(--ink-3); }
   ul.checks p { font-size: 0.92rem; color: var(--ink-2); }
   ul.checks strong { color: var(--ink); font-weight: 600; }
   code { font-family: var(--mono); font-size: 0.85em; background: var(--sunk); padding: 1px 5px; border-radius: 3px; }
@@ -721,6 +722,13 @@
         <span class="tag flag">Reported</span>
         <p><strong>Required-keyword coverage.</strong> Misses are reported as gaps
         rather than papered over. Nothing is ever invented to close one.</p>
+      </li>
+      <li>
+        <span class="tag opt">Optional</span>
+        <p><strong>Scored against HackerRank's open-source screener.</strong> The
+        compiled PDF can be run back through <code>tools/hiring-agent/</code> for
+        directional feedback. It never gates a ship: the same fixed PDF scores
+        anywhere from 66 to 99 across runs, so it informs rather than decides.</p>
       </li>
     </ul>
   </div>
