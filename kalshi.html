@@ -250,16 +250,16 @@
         <span class="k">Test Macro F1, best model — 95% CI [0.354, 0.422]</span>
       </div>
       <div>
-        <span class="n">0.394</span>
-        <span class="k">Momentum baseline, global. The model does not beat it</span>
+        <span class="n">0.395</span>
+        <span class="k">Momentum baseline, the strongest one. The model does not beat it</span>
       </div>
       <div>
-        <span class="n">&minus;0.006</span>
+        <span class="n">&minus;0.005</span>
         <span class="k">Model minus momentum — CI spans zero either direction</span>
       </div>
       <div>
-        <span class="n">~0.455</span>
-        <span class="k">F1 on the top-30% most confident predictions — the signal that survived</span>
+        <span class="n">0.456</span>
+        <span class="k">F1 on the top-30% most confident predictions (233 of 777) — the signal that survived</span>
       </div>
     </div>
     <p class="note">
@@ -351,10 +351,10 @@
           </svg>
         </div>
         <figcaption>
-          The keep rule is the whole design. With ±0.031 noise between folds, a
-          candidate can clear a mean-improvement bar on luck alone; requiring it
-          to win on 4 of 5 folds as well is what separates a discovered feature
-          from a coincidence.
+          The keep rule is the whole design. A candidate can clear a
+          mean-improvement bar on luck alone; requiring it to win on 4 of 5 folds
+          as well is what separates a discovered feature from a coincidence. The
+          paired half is the tightened rule adopted after the 59-iteration run.
         </figcaption>
       </figure>
     </div>
@@ -372,24 +372,35 @@
       <span class="tag">What autonomy means here</span>
       <p>
         Most AutoML searches a space someone drew first: a list of candidate
-        transforms, a grid, a set of columns to cross. This one does not have
-        that list. The reasoning agent reads the literature and a structured
-        record of every iteration it has already run, and writes a
-        <strong>hypothesis</strong> — a feature family it thinks will carry
-        signal, and why. A trial subagent turns that sentence into feature code
-        in an isolated worktree. No human decided in advance which families were
-        eligible.
+        transforms, a grid, a set of columns to cross. This one has such a list —
+        <strong>seven feature families</strong>, all sentiment-derived, written
+        out by hand before the run. What matters is that the loop did not stay
+        inside it. The reasoning agent reads the literature and a structured
+        record of every iteration it has already run, then writes a
+        <strong>hypothesis</strong>: a feature family it thinks will carry signal,
+        and why. A trial subagent turns that sentence into feature code in an
+        isolated worktree. Partway through, unprompted, it began proposing
+        market-structure and calendar features — a family that appears nowhere in
+        the catalog — and spent <strong>14</strong> of its trials there.
       </p>
       <p>
-        Which makes the gate the load-bearing part. An agent free to propose
-        anything will propose noise, and against a fold-to-fold spread of
-        <strong>±0.031</strong> a mean-improvement threshold would wave that
-        noise through as discovery. Requiring a candidate to clear
-        <strong>best + 0.005</strong> on the mean <em>and</em> beat the baseline
-        on <strong>4 of 5</strong> folds is what converts a proposal into
-        evidence. Everything rejected is written back into the history with its
-        reasoning, so the next iteration moves somewhere new instead of
-        re-proposing what already failed.
+        It ran <strong>59 iterations</strong> under 5-fold temporal CV and kept
+        <strong>7</strong> of them. The other 52 were logged as neutral or
+        regressed and written back into the history with their reasoning, so the
+        next iteration moves somewhere new instead of re-proposing what already
+        failed. A search that rejects 88% of its own ideas is doing the work; the
+        rejections are the record.
+      </p>
+      <p>
+        Those 59 were judged on mean CV F1 clearing <strong>best + 0.005</strong>.
+        The fold-to-fold spread at the time was <strong>±0.031</strong>, wide
+        enough that a mean-only bar is close to a coin flip, so the gate was later
+        tightened: a candidate now has to beat the baseline on <strong>4 of 5
+        folds</strong> as well. The paired rule earned itself immediately. Making
+        fold membership reproducible moved CV from 0.3848 to 0.3906 on row
+        ordering alone — <strong>+0.0058</strong>, clearing the mean bar — and the
+        paired check caught it at 3 of 5 folds and logged it NEUTRAL. The same fix
+        cut the spread to ±0.0161.
       </p>
       <p>
         That discipline is what makes the negative result worth reporting. A
@@ -415,16 +426,16 @@
         <tr><th>Model</th><th class="num">Test Macro F1</th><th>Reading</th></tr>
       </thead>
       <tbody>
-        <tr><td>Momentum baseline (global)</td><td class="num">0.394</td><td class="dim">the bar to clear</td></tr>
-        <tr><td>Momentum baseline (per-market)</td><td class="num">0.385</td><td class="dim">weaker variant</td></tr>
+        <tr><td>Momentum baseline (previous label)</td><td class="num">0.395</td><td class="dim">the bar to clear</td></tr>
+        <tr><td>roberta_xgboost</td><td class="num">0.384</td><td class="dim">domain alignment buys little</td></tr>
         <tr><td>finbert_xgboost (AutoML)</td><td class="num">0.390</td><td class="dim">does not clear it</td></tr>
         <tr><td>finbert_catboost</td><td class="num">0.382</td><td class="dim">below both baselines</td></tr>
-        <tr class="hi"><td>finbert_xgboost, top-30% confidence</td><td class="num">~0.455</td><td class="dim">the defensible edge</td></tr>
+        <tr class="hi"><td>finbert_xgboost, top-30% confidence</td><td class="num">0.456</td><td class="dim">the defensible edge</td></tr>
       </tbody>
     </table>
 
     <p class="note">
-      Cross-validation on train and validation, TimeSeriesSplit k=5: 0.385 ± 0.031.
+      Cross-validation on train and validation, TimeSeriesSplit k=5: 0.3906 ± 0.0161.
       The confidence-gated row is the one finding that survives: the model is
       well calibrated even where it is not more accurate on average, so knowing
       <em>when</em> it is likely right is worth more than its average accuracy.
