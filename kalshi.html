@@ -159,23 +159,25 @@
   }
   .box { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; }
   .box-accent { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.8; }
+  .box-warn { fill: var(--surface); stroke: var(--warn); stroke-width: 1.5; }
+  /* Stacked shells stand in for the three trials that run each round, rather
+     than drawing three identical boxes. */
+  .shell { fill: var(--surface); stroke: var(--rule); stroke-width: 1.5; opacity: .5; }
   .n-title { font-family: var(--sans); font-size: 13.5px; font-weight: 600; fill: var(--ink); }
   .n-sub { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-3); }
   .flow { stroke: var(--ink-3); stroke-width: 1.5; fill: none; }
+  /* The return edge is the mechanism the figure exists to show, so it is the
+     heaviest line in it. */
+  .flow-back { stroke: var(--ink-3); stroke-width: 2.2; fill: none; }
+  .flow-keep { stroke: var(--accent); stroke-width: 1.6; fill: none; }
   .flow-label { font-family: var(--mono); font-size: 10.5px; fill: var(--ink-2); }
-  .rej { stroke: var(--warn); stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
-  .rej-label { font-family: var(--mono); font-size: 10.5px; fill: var(--warn); }
+  .rej { stroke: var(--warn); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; }
 
   /* The argument is set as body prose rather than boxed off as an aside.
      Only the thresholds themselves take emphasis. */
   .claim { max-width: 72ch; }
-  .claim .tag {
-    font-family: var(--mono); font-size: .74rem; color: var(--ink-3);
-    display: block; margin-bottom: 14px;
-  }
   .claim p { color: var(--ink-2); }
   .claim strong { color: var(--ink); font-weight: 500; }
-  
 
   /* results table */
   table.res { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .8rem; }
@@ -230,14 +232,14 @@
     <h1>Kalshi Sentiment Predictor</h1>
     <p class="sub">
       An LLM-driven AutoML loop searching for predictive signal in Kalshi
-      prediction markets, starting from transformer sentiment embeddings. It
-      writes its own feature hypotheses from the literature and from its own
-      history, then has to get them past a gate built to reject coincidence.
-      The search procedure is the contribution.
+      prediction markets, starting from transformer sentiment scores. It writes
+      its own feature hypotheses from the literature and from its own history,
+      then has to get them past a gate built to reject coincidence. The search
+      procedure is the contribution.
     </p>
     <div class="stack">
       <span>PyTorch</span><span>FinBERT</span><span>Twitter-RoBERTa</span>
-      <span>XGBoost</span><span>AutoML</span><span>NeurIPS-format paper</span>
+      <span>XGBoost</span><span>CatBoost</span><span>AutoML</span>
     </div>
   </div>
 </header>
@@ -251,11 +253,7 @@
       </div>
       <div>
         <span class="n">0.395</span>
-        <span class="k">Momentum baseline, the strongest one. The model does not beat it</span>
-      </div>
-      <div>
-        <span class="n">&minus;0.005</span>
-        <span class="k">Model minus momentum — CI spans zero either direction</span>
+        <span class="k">Momentum baseline, the strongest of the three. The model does not beat it, and it sits inside the model's CI</span>
       </div>
       <div>
         <span class="n">0.456</span>
@@ -263,8 +261,9 @@
       </div>
     </div>
     <p class="note">
-      Test window Nov–Dec 2024, held out chronologically. 5,177 price events,
-      70/15/15 chronological split, purged temporal cross-validation.
+      Test window 10 Nov – 28 Dec 2024, held out chronologically: 777 of 5,174
+      price events, split 70/15/15 by time. Model selection ran on 5-fold
+      TimeSeriesSplit over train plus validation and never touched test.
     </p>
   </div>
 </section>
@@ -290,71 +289,92 @@
   <div class="container wide">
     <div class="head">
       <div class="eyebrow">The loop</div>
-      <h2>A reasoning agent proposes candidates and trial subagents write the code.</h2>
+      <h2>Each round pitches three competing candidates and keeps at most one.</h2>
       <p>
-        Each iteration is a hypothesis with a paper trail. The acceptance gate is
-        the part that matters — it is deliberately hard to pass.
+        The pitch is written from the trial history, so what has already failed
+        steers the next round as much as what has worked. The gate in the fourth
+        stage is deliberately hard to pass.
       </p>
     </div>
 
     <div class="card">
       <figure>
         <div class="figure-scroll">
-          <svg class="loop" viewBox="0 0 900 400" role="img"
-               aria-label="Diagram of the AutoML feature-discovery loop. A Claude reasoning agent searches literature and reads a structured JSON history of past iterations, then proposes feature candidates. Parallel Claude Haiku trial subagents write each candidate's feature code in isolated git worktrees. Candidates are evaluated under five-fold TimeSeriesSplit cross-validation and must pass a paired per-fold keep rule: beat the current best by 0.005 mean and beat baseline on at least four of five folds. Accepted candidates join the feature set; rejected ones are written back to the history with their reasoning.">
+          <svg class="loop" viewBox="0 0 900 310" role="img"
+               aria-label="The feature-discovery loop drawn as a cycle with four stages and a return edge. Stage one, the trial history: 110 logged runs, each recording a hypothesis, what it scored, and why it failed. Stage two, a reasoning agent reads that history along with a seven-family feature catalog and pitches three competing candidates. Stage three, three trial agents run in parallel in isolated worktrees, each writing the feature code for one candidate. Stage four, a keep rule scores the candidates under five-fold cross-validation and accepts one only if its mean macro F1 beats the current best by more than 0.005 and it wins at least four of the five folds. The gate keeps at most one candidate per round: that one joins the feature set, and the others are rejected and marked so they are not proposed again. Both outcomes travel back along a single heavy return edge into the trial history, which is what the next round's pitch is written from.">
             <defs>
               <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor" />
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--ink-3)" />
               </marker>
-              <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker id="ah-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent)" />
+              </marker>
+              <marker id="ah-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                 <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--warn)" />
               </marker>
             </defs>
 
-            <rect class="box" x="16" y="30" width="200" height="70" rx="8" />
-            <text class="n-title" x="36" y="58">Reasoning agent</text>
-            <text class="n-sub" x="36" y="76">literature search</text>
-            <text class="n-sub" x="36" y="90">+ JSON iteration history</text>
+            <!-- 1. history -->
+            <rect class="box" x="20" y="58" width="178" height="92" rx="3" />
+            <text class="n-title" x="36" y="86">Trial history</text>
+            <text class="n-sub" x="36" y="106">110 runs logged</text>
+            <text class="n-sub" x="36" y="124">what failed, and why</text>
 
-            <line class="flow" x1="216" y1="65" x2="258" y2="65" marker-end="url(#ah)" />
-            <text class="flow-label" x="239" y="20" text-anchor="middle">hypothesis</text>
+            <line class="flow" x1="198" y1="104" x2="238" y2="104" marker-end="url(#ah)" />
 
-            <rect class="box" x="262" y="30" width="200" height="70" rx="8" />
-            <text class="n-title" x="282" y="58">Haiku trial subagents</text>
-            <text class="n-sub" x="282" y="76">write feature code</text>
-            <text class="n-sub" x="282" y="90">parallel, isolated worktrees</text>
+            <!-- 2. proposer -->
+            <rect class="box" x="242" y="58" width="178" height="92" rx="3" />
+            <text class="n-title" x="258" y="86">Reasoning agent</text>
+            <text class="n-sub" x="258" y="106">reads the history</text>
+            <text class="n-sub" x="258" y="124">and a 7-family catalog</text>
 
-            <line class="flow" x1="462" y1="65" x2="504" y2="65" marker-end="url(#ah)" />
+            <line class="flow" x1="420" y1="104" x2="460" y2="104" marker-end="url(#ah)" />
+            <text class="flow-label" x="440" y="40" text-anchor="middle">3 candidates</text>
 
-            <rect class="box" x="508" y="30" width="200" height="70" rx="8" />
-            <text class="n-title" x="528" y="58">Evaluation</text>
-            <text class="n-sub" x="528" y="76">5-fold TimeSeriesSplit</text>
-            <text class="n-sub" x="528" y="90">purged temporal CV</text>
+            <!-- 3. trials: two shells behind one box, for the three run per round -->
+            <rect class="shell" x="476" y="46" width="178" height="92" rx="3" />
+            <rect class="shell" x="470" y="52" width="178" height="92" rx="3" />
+            <rect class="box" x="464" y="58" width="178" height="92" rx="3" />
+            <text class="n-title" x="480" y="86">Trial agents</text>
+            <text class="n-sub" x="480" y="106">3 in parallel</text>
+            <text class="n-sub" x="480" y="124">isolated worktrees</text>
 
-            <line class="flow" x1="608" y1="100" x2="608" y2="146" marker-end="url(#ah)" />
+            <line class="flow" x1="646" y1="104" x2="694" y2="104" marker-end="url(#ah)" />
+            <text class="flow-label" x="674" y="40" text-anchor="middle">5-fold CV</text>
 
-            <rect class="box-accent" x="448" y="150" width="320" height="76" rx="8" />
-            <text class="n-title" x="470" y="178">Paired per-fold keep rule</text>
-            <text class="n-sub" x="470" y="197">mean F1 &gt; best + 0.005</text>
-            <text class="n-sub" x="470" y="213">AND beats baseline on 4 of 5 folds</text>
+            <!-- 4. gate -->
+            <rect class="box-accent" x="698" y="58" width="178" height="92" rx="3" />
+            <text class="n-title" x="714" y="86">Keep rule</text>
+            <text class="n-sub" x="714" y="106">mean F1 &gt; best + 0.005</text>
+            <text class="n-sub" x="714" y="124">wins 4 of the 5 folds</text>
 
-            <line class="flow" x1="448" y1="188" x2="392" y2="188" marker-end="url(#ah)" />
-            <text class="flow-label" x="300" y="184">accepted &rarr;</text>
-            <text class="flow-label" x="300" y="198">joins feature set</text>
+            <!-- gate outcomes -->
+            <path class="flow-keep" d="M 726 150 L 726 176 L 553 176 L 553 194" marker-end="url(#ah-a)" />
+            <text class="flow-label" x="640" y="167" text-anchor="middle">at most one per round</text>
+            <path class="rej" d="M 787 150 L 787 194" marker-end="url(#ah-w)" />
 
-            <path class="rej" d="M 608 226 L 608 268 L 116 268 L 116 106" marker-end="url(#ahw)" />
-            <text class="rej-label" x="330" y="288">rejected — written back to history with its reasoning, so the agent stops re-proposing it</text>
+            <rect class="box-accent" x="464" y="196" width="178" height="54" rx="3" />
+            <text class="n-title" x="480" y="222">Kept</text>
+            <text class="n-sub" x="480" y="240">joins the feature set</text>
 
-            <rect class="box" x="16" y="316" width="868" height="66" rx="8" />
-            <text class="n-title" x="40" y="344">Why the gate is strict</text>
-            <text class="n-sub" x="40" y="364">fold-to-fold F1 noise is about ±0.031 — a mean-only threshold would accept noise as discovery</text>
+            <rect class="box-warn" x="698" y="196" width="178" height="54" rx="3" />
+            <text class="n-title" x="714" y="222">Rejected</text>
+            <text class="n-sub" x="714" y="240">not re-proposed</text>
+
+            <!-- the return edge -->
+            <path class="flow-keep" d="M 553 250 L 553 288" />
+            <path class="rej" d="M 787 250 L 787 288" />
+            <path class="flow-back" d="M 787 288 L 105 288 L 105 154" marker-end="url(#ah)" />
+            <text class="flow-label" x="320" y="280" text-anchor="middle">every outcome, with its reasoning, returns to the history</text>
           </svg>
         </div>
         <figcaption>
-          The keep rule is the whole design. A candidate can clear a
-          mean-improvement bar on luck alone; requiring it to win on 4 of 5 folds
-          as well is what separates a discovered feature from a coincidence. The
-          paired half is the tightened rule adopted after the 59-iteration run.
+          The gate is the part that had to be built carefully. A candidate can
+          clear a mean-improvement bar on luck alone, so it also has to win four
+          of the five folds against the same baseline. One script evaluates both
+          halves and prints a verdict; the loop obeys that line rather than
+          re-deriving the arithmetic. The paired half was adopted after the
+          59-iteration run described below.
         </figcaption>
       </figure>
     </div>
@@ -365,23 +385,23 @@
   <div class="container narrow">
     <div class="head">
       <div class="eyebrow">The discovery claim</div>
-      <h2>The search space was never enumerated by a human.</h2>
+      <h2>The loop opened a feature family the catalog does not contain.</h2>
     </div>
 
     <div class="claim">
-      <span class="tag">What autonomy means here</span>
       <p>
         Most AutoML searches a space someone drew first: a list of candidate
         transforms, a grid, a set of columns to cross. This one has such a list —
-        <strong>seven feature families</strong>, all sentiment-derived, written
-        out by hand before the run. What matters is that the loop did not stay
-        inside it. The reasoning agent reads the literature and a structured
+        <strong>seven feature families</strong>, every one of them derived from
+        sentiment, written out by hand. What matters is that the loop did not
+        stay inside it. The reasoning agent reads the literature and a structured
         record of every iteration it has already run, then writes a
         <strong>hypothesis</strong>: a feature family it thinks will carry signal,
         and why. A trial subagent turns that sentence into feature code in an
         isolated worktree. Partway through, unprompted, it began proposing
-        market-structure and calendar features — a family that appears nowhere in
-        the catalog — and spent <strong>14</strong> of its trials there.
+        market-structure and calendar features, computed from nothing but the
+        event timestamp or the market ticker, and spent <strong>12</strong> of its
+        59 trials there.
       </p>
       <p>
         It ran <strong>59 iterations</strong> under 5-fold temporal CV and kept
@@ -396,15 +416,15 @@
         The fold-to-fold spread at the time was <strong>±0.031</strong>, wide
         enough that a mean-only bar is close to a coin flip, so the gate was later
         tightened: a candidate now has to beat the baseline on <strong>4 of 5
-        folds</strong> as well. The paired rule earned itself immediately. Making
-        fold membership reproducible moved CV from 0.3848 to 0.3906 on row
-        ordering alone — <strong>+0.0058</strong>, clearing the mean bar — and the
-        paired check caught it at 3 of 5 folds and logged it NEUTRAL. The same fix
-        cut the spread to ±0.0161.
+        folds</strong> as well. The first thing the paired rule caught was a
+        non-result. Making fold membership reproducible moved CV from 0.3848 to
+        0.3906 on row ordering alone — <strong>+0.0058</strong>, clearing the mean
+        bar — and the paired check scored it 3 of 5 folds and logged it NEUTRAL.
+        The same fix cut the spread to ±0.0161.
       </p>
       <p>
-        That discipline is what makes the negative result worth reporting. A
-        loop that searched an unsupervised feature space under purged temporal
+        That discipline is what makes the negative result worth reporting. A loop
+        that searched a feature space it partly wrote itself, under temporal
         cross-validation, and could not clear a momentum baseline, has
         established something firmer than a loop that got lucky: it marks where
         sentiment stops paying, and it says so with a gate strict enough that
@@ -436,6 +456,8 @@
 
     <p class="note">
       Cross-validation on train and validation, TimeSeriesSplit k=5: 0.3906 ± 0.0161.
+      The naive floors are 0.224 for always-FLAT and 0.333 for class-weighted
+      random, so the model clears those and only those.
       The confidence-gated row is the one finding that survives: the model is
       well calibrated even where it is not more accurate on average, so knowing
       <em>when</em> it is likely right is worth more than its average accuracy.
@@ -460,10 +482,11 @@
         <div>
           <h3>Use temporal cross-validation from the first iteration</h3>
           <p>
-            The early loop ran on a fixed validation split, peaked at F1 = 0.373,
-            and collapsed to 0.333 on test. Temporal CV was adopted mid-project
-            as a repair. Starting there would have made every iteration's number
-            comparable and caught the overfit far earlier.
+            The early loop scored every candidate against one fixed validation
+            split and peaked at F1 = 0.373 there. Re-scored under 5-fold temporal
+            CV, the same feature set was worth 0.333. Temporal CV was adopted
+            mid-project as a repair; starting there would have made every
+            iteration's number comparable and caught the overfit far earlier.
           </p>
         </div>
       </li>
