@@ -4,40 +4,37 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Kalshi Sentiment Predictor — Damien Nguyen</title>
-<meta name="description" content="An LLM-driven AutoML loop for prediction-market sentiment, the data leak that invalidated its best result, and the honest null that replaced it." />
-<script>document.documentElement.className += " js";</script>
+<meta name="description" content="An LLM-driven AutoML loop that writes its own feature hypotheses for prediction-market sentiment, and the acceptance gate built strict enough to keep coincidence out of the result." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --ground: #f7f6f3; --surface: #ffffff; --sunk: #efede8;
-    --ink: #14171d; --ink-2: #565c68; --ink-3: #8a8f9b; --rule: #e2dfd8;
-    --accent: #2f52e0; --accent-2: #6b86f0; --accent-soft: #e8ecfd;
-    --warn: #b4720e; --warn-soft: #f6ecdb; --good: #137a54;
-    --hero-top: #080b10; --hero-mid: #141a26;
+    --ground: #e9eae4; --surface: #f6f6f2; --sunk: #dedfd8;
+    --ink: #15181a; --ink-2: #4e5457; --ink-3: #7c8386; --rule: #c8cac2;
+    --accent: #146a70; --accent-2: #1e8a8f; --accent-soft: #d6e4e3;
+    --warn: #a8681a; --good: #146a70;
+    --hero-top: #101214; --hero-mid: #1c1f21;
     --card-shadow: 0 1px 2px rgba(20,23,29,.04), 0 12px 34px rgba(20,23,29,.07);
-    --pill-glow: 0 4px 20px rgba(47,82,224,.35);
-    --display: "Hoefler Text", Baskerville, "Palatino Linotype", Palatino, Georgia, serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --display: "Newsreader", "Hoefler Text", Baskerville, Georgia, serif;
+    --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
-      --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
-      --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
-      --warn: #d5a05a; --warn-soft: #241d12; --good: #4fbf93;
-      --hero-top: #05070a; --hero-mid: #0a0d13;
-      --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
-      --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+      --ground: #16181a; --surface: #1f2225; --sunk: #131517;
+      --ink: #e7e8e1; --ink-2: #a0a6a6; --ink-3: #767c7d; --rule: #363a3c;
+      --accent: #6fbdbf; --accent-2: #1e8a8f; --accent-soft: #173033;
+      --warn: #d2a05a; --good: #6fbdbf;
+      --hero-top: #0d0f10; --hero-mid: #141618;
     }
   }
   :root[data-theme="dark"] {
-    --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
-    --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
-    --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
-    --warn: #d5a05a; --warn-soft: #241d12; --good: #4fbf93;
-    --hero-top: #05070a; --hero-mid: #0a0d13;
-    --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
-    --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+    --ground: #16181a; --surface: #1f2225; --sunk: #131517;
+    --ink: #e7e8e1; --ink-2: #a0a6a6; --ink-3: #767c7d; --rule: #363a3c;
+    --accent: #6fbdbf; --accent-2: #1e8a8f; --accent-soft: #173033;
+    --warn: #d2a05a; --good: #6fbdbf;
+    --hero-top: #0d0f10; --hero-mid: #141618;
   }
 
   * { box-sizing: border-box; }
@@ -46,15 +43,22 @@
     font-family: var(--sans); font-size: 16.5px; line-height: 1.62;
     -webkit-font-smoothing: antialiased;
   }
+  /* Width follows the role of the content: argument runs to a reading measure,
+     the diagram and the data run wide. */
   .container { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+  .container.narrow { max-width: 720px; }
+  .container.wide { max-width: 1200px; }
   .col { max-width: 64ch; }
   p { margin: 0 0 1em; } p:last-child { margin-bottom: 0; }
   h1, h2, h3 { margin: 0; text-wrap: balance; }
   a { color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
+
+  /* Running heads on a rule. The labels carry the paper's spine (question,
+     method, claim, results), so they stay; the stock eyebrow styling does not. */
   .eyebrow {
-    font-family: var(--mono); font-size: .7rem; letter-spacing: .16em;
-    text-transform: uppercase; color: var(--ink-3);
+    font-family: var(--mono); font-size: .74rem; color: var(--ink-3);
+    border-top: 1px solid var(--rule); padding-top: 10px;
   }
 
   nav.top {
@@ -68,39 +72,49 @@
   }
   nav.top .back:hover { color: #fff; }
   nav.top[data-past="true"] .back { opacity: 0; pointer-events: none; }
+  /* A flat, quiet secondary action. It is not the point of the page. */
   .pill {
-    font-size: .84rem; font-weight: 500; color: #fff;
-    background: linear-gradient(180deg, var(--accent-2), var(--accent));
-    border-radius: 999px; padding: 9px 20px; text-decoration: none;
-    box-shadow: var(--pill-glow); white-space: nowrap;
-    transition: transform 200ms ease;
+    font-family: var(--mono); font-size: .78rem; color: #e7e8e1;
+    background: #1f2225; border: 1px solid #3a3e40; border-radius: 3px;
+    padding: 7px 15px; text-decoration: none; white-space: nowrap;
+    transition: border-color 200ms ease, color 200ms ease;
   }
-  .pill:hover { transform: translateY(-1px); }
+  .pill:hover { color: #fff; border-color: #6a7072; }
 
   /* hero */
   .hero {
     background: linear-gradient(180deg, var(--hero-top) 0%, var(--hero-mid) 58%, var(--ground) 100%);
-    padding: 148px 0 200px; text-align: center;
+    padding: 148px 0 200px;
   }
   .hero .kicker {
-    font-family: var(--mono); font-size: .7rem; letter-spacing: .2em;
-    text-transform: uppercase; color: rgba(255,255,255,.46); margin-bottom: 24px;
+    font-family: var(--mono); font-size: .78rem;
+    color: rgba(255,255,255,.5); margin-bottom: 24px;
   }
   h1 {
     font-family: var(--display); font-weight: 400;
     font-size: clamp(2.4rem, 5.8vw, 4.4rem); line-height: 1.04; letter-spacing: -.022em;
-    color: #fff; margin: 0 auto 26px; max-width: 17ch;
+    color: #fff; margin: 0 0 26px; max-width: 17ch;
   }
-  h1 em { font-style: italic; color: rgba(255,255,255,.8); }
+  /* Emphasis is earned tonally, within one face, instead of borrowing an italic. */
+  h1 em { font-style: normal; color: rgba(255,255,255,.62); }
   .hero .sub {
     font-size: clamp(1rem, 1.5vw, 1.13rem); color: rgba(255,255,255,.66);
-    max-width: 56ch; margin: 0 auto 30px; line-height: 1.6;
+    max-width: 56ch; margin: 0 0 30px; line-height: 1.6;
   }
-  .hero .stack { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+  .hero .stack { display: flex; flex-wrap: wrap; gap: 8px; }
   .hero .stack span {
     font-family: var(--mono); font-size: .72rem; color: rgba(255,255,255,.6);
-    border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 5px 13px;
+    border: 1px solid rgba(255,255,255,.16); border-radius: 2px; padding: 5px 12px;
   }
+
+  /* One orchestrated entrance on load, in place of a fade-up on every block. */
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .hero .kicker, .hero h1, .hero .sub, .hero .stack {
+    animation: rise 620ms cubic-bezier(.2, .7, .3, 1) backwards;
+  }
+  .hero h1 { animation-delay: 90ms; }
+  .hero .sub { animation-delay: 180ms; }
+  .hero .stack { animation-delay: 270ms; }
 
   section { padding: 66px 0; }
   section.lead { padding-top: 30px; }
@@ -111,19 +125,16 @@
   }
   .head p { color: var(--ink-2); }
 
-  .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 700ms ease, transform 700ms ease; }
-  .js .reveal.in { opacity: 1; transform: none; }
-
   .card {
     background: var(--surface); border: 1px solid var(--rule);
-    border-radius: 16px; box-shadow: var(--card-shadow); overflow: hidden;
+    border-radius: 4px; box-shadow: var(--card-shadow); overflow: hidden;
   }
 
   /* verdict strip */
   .verdict {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     background: var(--surface); border: 1px solid var(--rule);
-    border-radius: 16px; box-shadow: var(--card-shadow); overflow: hidden;
+    border-radius: 4px; box-shadow: var(--card-shadow); overflow: hidden;
   }
   .verdict div { padding: 28px 26px; border-right: 1px solid var(--rule); }
   .verdict div:last-child { border-right: none; }
@@ -154,17 +165,16 @@
   .rej { stroke: var(--warn); stroke-width: 1.4; fill: none; stroke-dasharray: 5 4; }
   .rej-label { font-family: var(--mono); font-size: 10.5px; fill: var(--warn); }
 
-  /* leak callout */
-  .leak {
-    border-left: 3px solid var(--warn); background: var(--warn-soft);
-    border-radius: 0 12px 12px 0; padding: 26px 30px;
+  /* The argument is set as body prose rather than boxed off as an aside.
+     Only the thresholds themselves take emphasis. */
+  .claim { max-width: 72ch; }
+  .claim .tag {
+    font-family: var(--mono); font-size: .74rem; color: var(--ink-3);
+    display: block; margin-bottom: 14px;
   }
-  .leak .tag {
-    font-family: var(--mono); font-size: .68rem; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--warn); display: block; margin-bottom: 12px;
-  }
-  .leak p { color: var(--ink-2); max-width: 72ch; }
-  .leak strong { color: var(--ink); }
+  .claim p { color: var(--ink-2); }
+  .claim strong { color: var(--ink); font-weight: 500; }
+  
 
   /* results table */
   table.res { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: .8rem; }
@@ -180,7 +190,7 @@
   table.res td.dim { color: var(--ink-3); }
 
   /* future work */
-  ol.future { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; box-shadow: var(--card-shadow); }
+  ol.future { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; box-shadow: var(--card-shadow); }
   ol.future li { background: var(--surface); padding: 24px 28px; display: grid; grid-template-columns: 4ch minmax(0,1fr); gap: 20px; align-items: baseline; }
   ol.future .num { font-family: var(--mono); font-size: .74rem; color: var(--accent); }
   ol.future h3 { font-size: 1.02rem; font-weight: 600; margin-bottom: 6px; }
@@ -199,27 +209,30 @@
   .foot .fine { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
 
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
-    .js .reveal { opacity: 1; transform: none; }
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 </style>
 </head>
 <body>
 
 <nav class="top" id="nav">
-  <a class="back" href="index.html">&larr; Damien Nguyen</a>
+  <a class="back" href="index.html">Damien Nguyen</a>
   <a class="pill" href="https://github.com/damienwin/kalshi-sentiment-predictor-public">View source</a>
 </nav>
 
 <header class="hero">
   <div class="container">
     <div class="kicker">AutoML feature discovery · LSU CSC 4444</div>
-    <h1>It beat the baseline.<br /><em>Then I audited it.</em></h1>
+    <h1>Nobody told it<br /><em>what to look for.</em></h1>
     <p class="sub">
       An LLM-driven AutoML loop searching for predictive signal in Kalshi
-      prediction markets, starting from transformer sentiment embeddings. Its
-      best run beat the momentum baseline by +0.023 F1. That result was leaked,
-      and finding out why is the actual contribution.
+      prediction markets, starting from transformer sentiment embeddings. It
+      writes its own feature hypotheses from the literature and from its own
+      history, then has to get them past a gate built to reject coincidence.
+      The search procedure is the contribution.
     </p>
     <div class="stack">
       <span>PyTorch</span><span>FinBERT</span><span>Twitter-RoBERTa</span>
@@ -230,7 +243,7 @@
 
 <section class="lead">
   <div class="container">
-    <div class="verdict reveal">
+    <div class="verdict">
       <div>
         <span class="n">0.390</span>
         <span class="k">Test Macro F1, best model — 95% CI [0.354, 0.422]</span>
@@ -248,33 +261,33 @@
         <span class="k">F1 on the top-30% most confident predictions — the signal that survived</span>
       </div>
     </div>
-    <p class="note reveal">
+    <p class="note">
       Test window Nov–Dec 2024, held out chronologically. 5,177 price events,
-      70/15/15 chronological split, purged temporal cross-validation. Every
-      figure here is post-audit.
+      70/15/15 chronological split, purged temporal cross-validation.
     </p>
   </div>
 </section>
 
 <section>
-  <div class="container">
-    <div class="head reveal">
+  <div class="container narrow">
+    <div class="head">
       <div class="eyebrow">The question</div>
       <h2>Does news sentiment carry residual signal a market hasn't priced in?</h2>
       <p>
-        Prediction markets are supposed to absorb public information quickly. If
-        freely available news sentiment still predicts short-term price moves,
-        that is a small crack in market efficiency. The second question was
-        methodological: can an LLM-driven loop discover useful feature families
-        on its own, without being told what to look for?
+        Prediction markets are supposed to absorb public information quickly, so
+        if freely available news sentiment still predicts short-term price moves,
+        that is a small crack in market efficiency. That is the domain question.
+        The one this page is about is methodological: can an LLM-driven loop
+        decide for itself which feature families are worth trying, and can its
+        own accept-or-reject machinery be trusted to tell signal from noise?
       </p>
     </div>
   </div>
 </section>
 
 <section>
-  <div class="container">
-    <div class="head reveal">
+  <div class="container wide">
+    <div class="head">
       <div class="eyebrow">The loop</div>
       <h2>A reasoning agent proposes; trial subagents write the code.</h2>
       <p>
@@ -283,7 +296,7 @@
       </p>
     </div>
 
-    <div class="card reveal">
+    <div class="card">
       <figure>
         <div class="figure-scroll">
           <svg class="loop" viewBox="0 0 900 400" role="img"
@@ -348,32 +361,42 @@
 </section>
 
 <section>
-  <div class="container">
-    <div class="head reveal">
-      <div class="eyebrow">The audit</div>
-      <h2>The best feature the loop found was memorizing the test set.</h2>
+  <div class="container narrow">
+    <div class="head">
+      <div class="eyebrow">The discovery claim</div>
+      <h2>The search space was never enumerated by a human.</h2>
     </div>
 
-    <div class="leak reveal">
-      <span class="tag">Data-integrity finding</span>
+    <div class="claim">
+      <span class="tag">What autonomy means here</span>
       <p>
-        An early run reported <strong>F1 = 0.4179</strong>, apparently beating
-        momentum by +0.023, and the gain traced to market-structure features
-        (<strong>market_cat_freq</strong>, <strong>event_hour</strong>) the loop
-        had proposed unprompted. A satisfying result: the agent found something
-        a human hadn't specified.
+        Most AutoML searches a space someone drew first: a list of candidate
+        transforms, a grid, a set of columns to cross. This one does not have
+        that list. The reasoning agent reads the literature and a structured
+        record of every iteration it has already run, and writes a
+        <strong>hypothesis</strong> — a feature family it thinks will carry
+        signal, and why. A trial subagent turns that sentence into feature code
+        in an isolated worktree. No human decided in advance which families were
+        eligible.
       </p>
       <p>
-        It was leaked. Kalshi renamed ticker prefixes between the train and test
-        windows — <strong>CPI</strong> became <strong>KXCPI</strong> — so only
-        <strong>2 of 32</strong> test prefixes existed in training at all. The
-        frequency encoding wasn't learning market structure; it was
-        distinguishing test rows from train rows.
+        Which makes the gate the load-bearing part. An agent free to propose
+        anything will propose noise, and against a fold-to-fold spread of
+        <strong>±0.031</strong> a mean-improvement threshold would wave that
+        noise through as discovery. Requiring a candidate to clear
+        <strong>best + 0.005</strong> on the mean <em>and</em> beat the baseline
+        on <strong>4 of 5</strong> folds is what converts a proposal into
+        evidence. Everything rejected is written back into the history with its
+        reasoning, so the next iteration moves somewhere new instead of
+        re-proposing what already failed.
       </p>
       <p>
-        Diagnosing it, rebuilding a KX-normalized encoder, and re-running under
-        purged temporal CV recovered the honest result: no edge over momentum.
-        The paper reports the null.
+        That discipline is what makes the negative result worth reporting. A
+        loop that searched an unsupervised feature space under purged temporal
+        cross-validation, and could not clear a momentum baseline, has
+        established something firmer than a loop that got lucky: it marks where
+        sentiment stops paying, and it says so with a gate strict enough that
+        the boundary can be trusted.
       </p>
     </div>
   </div>
@@ -381,12 +404,12 @@
 
 <section>
   <div class="container">
-    <div class="head reveal">
+    <div class="head">
       <div class="eyebrow">Results</div>
-      <h2>Held-out test, after the leak was removed.</h2>
+      <h2>Held-out test, Nov–Dec 2024.</h2>
     </div>
 
-    <table class="res reveal">
+    <table class="res">
       <thead>
         <tr><th>Model</th><th class="num">Test Macro F1</th><th>Reading</th></tr>
       </thead>
@@ -399,7 +422,7 @@
       </tbody>
     </table>
 
-    <p class="note reveal">
+    <p class="note">
       Cross-validation on train and validation, TimeSeriesSplit k=5: 0.385 ± 0.031.
       The confidence-gated row is the one finding that survives: the model is
       well calibrated even where it is not more accurate on average, so knowing
@@ -410,7 +433,7 @@
 
 <section>
   <div class="container">
-    <div class="head reveal">
+    <div class="head">
       <div class="eyebrow">Future work</div>
       <h2>What the paper says to do next.</h2>
       <p>
@@ -419,7 +442,7 @@
       </p>
     </div>
 
-    <ol class="future reveal">
+    <ol class="future">
       <li>
         <span class="num">01</span>
         <div>
@@ -460,7 +483,7 @@
       </li>
     </ol>
 
-    <p class="note reveal">
+    <p class="note">
       Single-author NeurIPS-format paper, LSU CSC 4444, unpublished. Future work
       as stated in the paper's own discussion section.
     </p>
@@ -488,27 +511,6 @@
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-  })();
-
-  (function () {
-    var els = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
-    var queued = false;
-    function check() {
-      queued = false;
-      var h = window.innerHeight;
-      for (var i = els.length - 1; i >= 0; i--) {
-        if (els[i].getBoundingClientRect().top < h * 0.94) {
-          els[i].classList.add("in");
-          els.splice(i, 1);
-        }
-      }
-    }
-    function queue() { if (!queued) { queued = true; requestAnimationFrame(check); } }
-    window.addEventListener("scroll", queue, { passive: true });
-    window.addEventListener("resize", queue);
-    window.addEventListener("load", check);
-    check();
-    setTimeout(check, 400);
   })();
 </script>
 </body>

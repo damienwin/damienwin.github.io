@@ -5,48 +5,47 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Damien Nguyen</title>
 <meta name="description" content="Computer Engineering at LSU. ML/AI systems, LLM agent infrastructure, and performance-focused data work." />
-<script>document.documentElement.className += " js";</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --ground: #f7f6f3;
-    --surface: #ffffff;
-    --sunk: #efede8;
-    --ink: #14171d;
-    --ink-2: #565c68;
-    --ink-3: #8a8f9b;
-    --rule: #e2dfd8;
-    --accent: #2f52e0;
-    --accent-2: #6b86f0;
-    --accent-soft: #e8ecfd;
-    --warn: #b4720e;
-    --good: #137a54;
-    --hero-top: #080b10;
-    --hero-mid: #141a26;
-    --card-shadow: 0 1px 2px rgba(20, 23, 29, 0.04), 0 12px 34px rgba(20, 23, 29, 0.07);
-    --pill-glow: 0 4px 20px rgba(47, 82, 224, 0.35);
-    --display: "Hoefler Text", Baskerville, "Palatino Linotype", Palatino, Georgia, serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --ground: #e9eae4;
+    --surface: #f6f6f2;
+    --sunk: #dedfd8;
+    --ink: #15181a;
+    --ink-2: #4e5457;
+    --ink-3: #7c8386;
+    --rule: #c8cac2;
+    --accent: #146a70;
+    --accent-2: #1e8a8f;
+    --accent-soft: #d6e4e3;
+    --warn: #a8681a;
+    --good: #146a70;
+    --hero-top: #101214;
+    --hero-mid: #1c1f21;
+    /* Elevation is reserved for things that actually lift on interaction, so
+       the resting state of a surface is a hairline and nothing else. */
+    --card-shadow: none;
+    --display: "Newsreader", "Hoefler Text", Baskerville, Georgia, serif;
+    --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
-      --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
-      --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
-      --warn: #d5a05a; --good: #4fbf93;
-      --hero-top: #05070a; --hero-mid: #0a0d13;
-      --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
-      --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+      --ground: #16181a; --surface: #1f2225; --sunk: #131517;
+      --ink: #e7e8e1; --ink-2: #a0a6a6; --ink-3: #767c7d; --rule: #363a3c;
+      --accent: #6fbdbf; --accent-2: #1e8a8f; --accent-soft: #173033;
+      --warn: #d2a05a; --good: #6fbdbf;
+      --hero-top: #0d0f10; --hero-mid: #141618;
     }
   }
   :root[data-theme="dark"] {
-    --ground: #0c0f14; --surface: #12161d; --sunk: #171c24;
-    --ink: #e9ebf0; --ink-2: #9aa2b1; --ink-3: #6f7787; --rule: #232935;
-    --accent: #8da3ff; --accent-2: #6b86f0; --accent-soft: #172038;
-    --warn: #d5a05a; --good: #4fbf93;
-    --hero-top: #05070a; --hero-mid: #0a0d13;
-    --card-shadow: 0 1px 2px rgba(0,0,0,.4), 0 14px 40px rgba(0,0,0,.45);
-    --pill-glow: 0 4px 22px rgba(141,163,255,.28);
+    --ground: #16181a; --surface: #1f2225; --sunk: #131517;
+    --ink: #e7e8e1; --ink-2: #a0a6a6; --ink-3: #767c7d; --rule: #363a3c;
+    --accent: #6fbdbf; --accent-2: #1e8a8f; --accent-soft: #173033;
+    --warn: #d2a05a; --good: #6fbdbf;
+    --hero-top: #0d0f10; --hero-mid: #141618;
   }
 
   * { box-sizing: border-box; }
@@ -55,15 +54,14 @@
     font-family: var(--sans); font-size: 16.5px; line-height: 1.62;
     -webkit-font-smoothing: antialiased;
   }
+  /* Width is a tool, not a constant: the work list runs wide, prose and the
+     record run to a reading measure. */
   .container { max-width: 1000px; margin: 0 auto; padding: 0 28px; }
+  .container.narrow { max-width: 760px; }
   p { margin: 0 0 1em; } p:last-child { margin-bottom: 0; }
   h1, h2, h3 { margin: 0; text-wrap: balance; }
   a { color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
-  .eyebrow {
-    font-family: var(--mono); font-size: .7rem; letter-spacing: .16em;
-    text-transform: uppercase; color: var(--ink-3);
-  }
 
   /* hero */
   .hero {
@@ -71,9 +69,18 @@
     padding: 132px 0 190px;
   }
   .hero .kicker {
-    font-family: var(--mono); font-size: .7rem; letter-spacing: .2em;
-    text-transform: uppercase; color: rgba(255,255,255,.46); margin-bottom: 26px;
+    font-family: var(--mono); font-size: .78rem;
+    color: rgba(255,255,255,.5); margin-bottom: 26px;
   }
+
+  /* One orchestrated entrance on load, in place of a fade-up on every block. */
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .hero .kicker, .hero h1, .hero .positioning, .hero .meta {
+    animation: rise 620ms cubic-bezier(.2, .7, .3, 1) backwards;
+  }
+  .hero h1 { animation-delay: 90ms; }
+  .hero .positioning { animation-delay: 180ms; }
+  .hero .meta { animation-delay: 270ms; }
   h1 {
     font-family: var(--display); font-weight: 400;
     font-size: clamp(2.7rem, 7vw, 5.4rem); line-height: 1; letter-spacing: -.025em;
@@ -90,30 +97,31 @@
 
   /* sections */
   section { padding: 70px 0; }
-  .head { display: flex; flex-direction: column; gap: 12px; margin-bottom: 38px; max-width: 60ch; }
+  /* One label per section, on a rule that spans the container as a divider.
+     Only prose inside the head is held to a reading measure. */
+  .head {
+    display: flex; flex-direction: column; gap: 12px; margin-bottom: 38px;
+    border-top: 1px solid var(--rule); padding-top: 16px;
+  }
   .head h2 {
     font-family: var(--display); font-weight: 400;
     font-size: clamp(1.7rem, 3.2vw, 2.5rem); line-height: 1.12; letter-spacing: -.02em;
   }
-  .head p { color: var(--ink-2); }
-
-  .js .reveal { opacity: 0; transform: translateY(20px); transition: opacity 700ms ease, transform 700ms ease; }
-  .js .reveal.in { opacity: 1; transform: none; }
+  .head p { color: var(--ink-2); max-width: 60ch; }
 
   /* work */
   .work { display: flex; flex-direction: column; gap: 20px; }
   .proj {
-    display: grid; grid-template-columns: 5ch minmax(0, 1fr) minmax(0, 15rem);
-    gap: 12px 34px; align-items: start;
-    background: var(--surface); border: 1px solid var(--rule); border-radius: 16px;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 15rem);
+    gap: 12px 44px; align-items: start;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 4px;
     box-shadow: var(--card-shadow); padding: 30px 32px;
     text-decoration: none; color: inherit;
-    transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+    transition: border-color 220ms ease, background 220ms ease;
   }
-  a.proj:hover { transform: translateY(-2px); border-color: var(--accent); }
+  a.proj:hover { border-color: var(--accent); background: var(--sunk); }
   @media (max-width: 780px) { .proj { grid-template-columns: minmax(0,1fr); gap: 14px; } }
 
-  .proj .idx { font-family: var(--mono); font-size: .74rem; color: var(--ink-3); padding-top: 6px; }
   .proj h3 {
     font-family: var(--display); font-weight: 400; font-size: 1.72rem;
     line-height: 1.15; letter-spacing: -.015em; margin-bottom: 8px;
@@ -122,35 +130,54 @@
   .proj .tags { display: flex; flex-wrap: wrap; gap: 6px 8px; }
   .proj .tags span {
     font-family: var(--mono); font-size: .68rem; color: var(--ink-3);
-    border: 1px solid var(--rule); border-radius: 999px; padding: 3px 10px;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 3px 9px;
   }
-  .proj .stat {
-    border-left: 2px solid var(--accent-soft); padding-left: 18px;
-  }
+  /* A neutral rule, not a colored stripe: the number is already the emphasis. */
+  .proj .stat { border-top: 1px solid var(--rule); padding-top: 15px; }
+  @media (min-width: 781px) { .proj .stat { border-top-color: transparent; } }
   .proj .stat .n {
     font-family: var(--display); font-size: 1.9rem; line-height: 1.05;
     letter-spacing: -.03em; font-variant-numeric: tabular-nums; display: block; margin-bottom: 5px;
   }
   .proj .stat .k { font-family: var(--mono); font-size: .7rem; line-height: 1.5; color: var(--ink-3); }
   .proj .go {
-    grid-column: 2 / -1; font-family: var(--mono); font-size: .74rem;
+    grid-column: 1 / -1; font-family: var(--mono); font-size: .74rem;
     color: var(--accent); margin-top: 16px;
   }
-  @media (max-width: 780px) { .proj .go { grid-column: 1; } }
-  .proj.static { box-shadow: none; }
+  a.proj:hover .go { text-decoration: underline; text-underline-offset: 3px; }
 
   /* experience */
   table.xp { width: 100%; border-collapse: collapse; font-size: .92rem; }
-  table.xp td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--rule); vertical-align: baseline; }
-  table.xp td.org { font-weight: 600; width: 30%; }
+  table.xp td { padding: 16px 16px 16px 0; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+  table.xp td.org { font-weight: 600; width: 28%; }
   table.xp td.role { color: var(--ink-2); }
   table.xp td.when {
     font-family: var(--mono); font-size: .74rem; color: var(--ink-3);
     text-align: right; white-space: nowrap; padding-right: 0;
   }
+
+  /* Logo slot. Holds an <img> when a real asset exists, and falls back to a
+     monogram so the row never renders as a broken image. */
+  table.xp td.logo { width: 34px; padding-right: 16px; }
+  /* Brand marks sit on a fixed near-white tile in both themes, because that is
+     the ground these logos were drawn for. */
+  .mark {
+    display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; overflow: hidden;
+    border: 1px solid var(--rule); border-radius: 3px; background: #f4f4f0;
+  }
+  .mark-svg { width: 20px; height: 20px; display: block; }
+  /* Wordmarks are wide, so they get the tile's width rather than a square box. */
+  .mark-svg.mark-wide { width: 26px; height: auto; }
+
   @media (max-width: 620px) {
-    table.xp td { display: block; border-bottom: none; padding: 2px 0; }
-    table.xp tr { display: block; border-bottom: 1px solid var(--rule); padding: 14px 0; }
+    table.xp, table.xp tbody, table.xp tr, table.xp td { display: block; }
+    table.xp tr {
+      position: relative; border-bottom: 1px solid var(--rule);
+      padding: 16px 0 16px 50px;
+    }
+    table.xp td { border-bottom: none; padding: 2px 0; }
+    table.xp td.logo { position: absolute; left: 0; top: 18px; padding: 0; }
     table.xp td.when { text-align: left; }
   }
 
@@ -163,8 +190,10 @@
   .foot .fine { font-family: var(--mono); font-size: .72rem; color: var(--ink-3); }
 
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
-    .js .reveal { opacity: 1; transform: none; }
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 </style>
 </head>
@@ -176,8 +205,7 @@
     <h1>I build systems that<br />check their own work.</h1>
     <p class="positioning">
       Computer Engineering at LSU, graduating May 2027. ML and LLM agent
-      infrastructure, performance-focused data work, and applied research —
-      usually with a verification pass bolted to the end of it.
+      infrastructure, and performance-focused data work.
     </p>
     <div class="meta">
       <span>SDE Intern at AWS Supply Chain, summer 2026</span>
@@ -188,21 +216,19 @@
 
 <section>
   <div class="container">
-    <div class="head reveal">
-      <div class="eyebrow">Selected work</div>
-      <h2>Three projects, and what each one actually proved.</h2>
+    <div class="head">
+      <h2>Selected work</h2>
     </div>
 
     <div class="work">
 
-      <a class="proj reveal" href="resume-tailorer.html">
-        <span class="idx">01</span>
+      <a class="proj" href="resume-tailorer.html">
         <div>
           <h3>Resume Tailorer</h3>
           <p class="blurb">
-            An agentic pipeline that scans job boards, hands every surviving
-            posting to its own subagent, and generates a one-page LaTeX resume
-            that has to pass a text-extraction check before it ships.
+            Scans job boards, hands every surviving posting to its own
+            subagent, and generates a one-page LaTeX resume that has to pass a
+            text-extraction check before it ships.
           </p>
           <div class="tags">
             <span>Python</span><span>LaTeX / tectonic</span><span>Agent orchestration</span><span>Browser automation</span>
@@ -212,37 +238,33 @@
           <span class="n">0.98 s</span>
           <span class="k">to filter 2,060 postings, on zero model tokens</span>
         </div>
-        <span class="go">Read the case study &rarr;</span>
+        <span class="go">Read the case study</span>
       </a>
 
-      <a class="proj reveal" href="kalshi.html">
-        <span class="idx">02</span>
+      <a class="proj" href="kalshi.html">
         <div>
           <h3>Kalshi Sentiment Predictor</h3>
           <p class="blurb">
-            An LLM-driven AutoML loop searching for signal in prediction-market
-            sentiment. It found a result that beat the baseline, then an audit
-            found the leak underneath it — so the paper reports the null.
+            An LLM-driven AutoML loop that writes its own feature hypotheses,
+            then has to get them past a gate strict enough to reject coincidence.
           </p>
           <div class="tags">
             <span>PyTorch</span><span>FinBERT</span><span>XGBoost</span><span>AutoML</span><span>NeurIPS-format paper</span>
           </div>
         </div>
         <div class="stat">
-          <span class="n">2 / 32</span>
-          <span class="k">test ticker prefixes present in train — the leak that killed the win</span>
+          <span class="n">4 of 5</span>
+          <span class="k">folds a proposed feature must beat the baseline on before it is kept</span>
         </div>
-        <span class="go">Read the case study &rarr;</span>
+        <span class="go">Read the case study</span>
       </a>
 
-      <a class="proj reveal" href="https://github.com/damienwin/Basic-Recognition-NeuralNetwork">
-        <span class="idx">03</span>
+      <a class="proj" href="https://github.com/damienwin/Basic-Recognition-NeuralNetwork">
         <div>
           <h3>Deep Neural Network, from scratch</h3>
           <p class="blurb">
-            A modular network in NumPy with no framework underneath it —
-            backprop, AdamW, dropout and L2 written by hand to understand what
-            the frameworks are doing.
+            A modular network in NumPy with no framework underneath it.
+            Backprop, AdamW, dropout and L2 written by hand.
           </p>
           <div class="tags">
             <span>Python</span><span>NumPy</span><span>Optimization</span>
@@ -252,7 +274,7 @@
           <span class="n">25–45%</span>
           <span class="k">faster backprop after cutting allocations in the inner kernels</span>
         </div>
-        <span class="go">View the source &rarr;</span>
+        <span class="go">View the source</span>
       </a>
 
     </div>
@@ -260,34 +282,38 @@
 </section>
 
 <section>
-  <div class="container">
-    <div class="head reveal">
-      <div class="eyebrow">Experience</div>
-      <h2>Where the practice came from.</h2>
+  <div class="container narrow">
+    <div class="head">
+      <h2>Experience</h2>
     </div>
-    <table class="xp reveal">
+    <table class="xp">
       <tbody>
         <tr>
+          <td class="logo"><span class="mark"><svg class="mark-svg" viewBox="0 0 24 24" role="img" aria-label="Amazon Web Services"><path fill="#FF9900" d="M6.763 10.036c0 .296.032.535.088.71.064.176.144.368.256.576.04.063.056.127.056.183 0 .08-.048.16-.152.24l-.503.335a.383.383 0 0 1-.208.072c-.08 0-.16-.04-.239-.112a2.47 2.47 0 0 1-.287-.375 6.18 6.18 0 0 1-.248-.471c-.622.734-1.405 1.101-2.347 1.101-.67 0-1.205-.191-1.596-.574-.391-.384-.59-.894-.59-1.533 0-.678.239-1.23.726-1.644.487-.415 1.133-.623 1.955-.623.272 0 .551.024.846.064.296.04.6.104.918.176v-.583c0-.607-.127-1.03-.375-1.277-.255-.248-.686-.367-1.3-.367-.28 0-.568.031-.863.103-.295.072-.583.16-.862.272a2.287 2.287 0 0 1-.28.104.488.488 0 0 1-.127.023c-.112 0-.168-.08-.168-.247v-.391c0-.128.016-.224.056-.28a.597.597 0 0 1 .224-.167c.279-.144.614-.264 1.005-.36a4.84 4.84 0 0 1 1.246-.151c.95 0 1.644.216 2.091.647.439.43.662 1.085.662 1.963v2.586zm-3.24 1.214c.263 0 .534-.048.822-.144.287-.096.543-.271.758-.51.128-.152.224-.32.272-.512.047-.191.08-.423.08-.694v-.335a6.66 6.66 0 0 0-.735-.136 6.02 6.02 0 0 0-.75-.048c-.535 0-.926.104-1.19.32-.263.215-.39.518-.39.917 0 .375.095.655.295.846.191.2.47.296.838.296zm6.41.862c-.144 0-.24-.024-.304-.08-.064-.048-.12-.16-.168-.311L7.586 5.55a1.398 1.398 0 0 1-.072-.32c0-.128.064-.2.191-.2h.783c.151 0 .255.025.31.08.065.048.113.16.16.312l1.342 5.284 1.245-5.284c.04-.16.088-.264.151-.312a.549.549 0 0 1 .32-.08h.638c.152 0 .256.025.32.08.063.048.12.16.151.312l1.261 5.348 1.381-5.348c.048-.16.104-.264.16-.312a.52.52 0 0 1 .311-.08h.743c.127 0 .2.065.2.2 0 .04-.009.08-.017.128a1.137 1.137 0 0 1-.056.2l-1.923 6.17c-.048.16-.104.263-.168.311a.51.51 0 0 1-.303.08h-.687c-.151 0-.255-.024-.32-.08-.063-.056-.119-.16-.15-.32l-1.238-5.148-1.23 5.14c-.04.16-.087.264-.15.32-.065.056-.177.08-.32.08zm10.256.215c-.415 0-.83-.048-1.229-.143-.399-.096-.71-.2-.918-.32-.128-.071-.215-.151-.247-.223a.563.563 0 0 1-.048-.224v-.407c0-.167.064-.247.183-.247.048 0 .096.008.144.024.048.016.12.048.2.08.271.12.566.215.878.279.319.064.63.096.95.096.502 0 .894-.088 1.165-.264a.86.86 0 0 0 .415-.758.777.777 0 0 0-.215-.559c-.144-.151-.416-.287-.807-.415l-1.157-.36c-.583-.183-1.014-.454-1.277-.813a1.902 1.902 0 0 1-.4-1.158c0-.335.073-.63.216-.886.144-.255.335-.479.575-.654.24-.184.51-.32.83-.415.32-.096.655-.136 1.006-.136.175 0 .359.008.535.032.183.024.35.056.518.088.16.04.312.08.455.127.144.048.256.096.336.144a.69.69 0 0 1 .24.2.43.43 0 0 1 .071.263v.375c0 .168-.064.256-.184.256a.83.83 0 0 1-.303-.096 3.652 3.652 0 0 0-1.532-.311c-.455 0-.815.071-1.062.223-.248.152-.375.383-.375.71 0 .224.08.416.24.567.159.152.454.304.877.44l1.134.358c.574.184.99.44 1.237.767.247.327.367.702.367 1.117 0 .343-.072.655-.207.926-.144.272-.336.511-.583.703-.248.2-.543.343-.886.447-.36.111-.734.167-1.142.167zM21.698 16.207c-2.626 1.94-6.442 2.969-9.722 2.969-4.598 0-8.74-1.7-11.87-4.526-.247-.223-.024-.527.272-.351 3.384 1.963 7.559 3.153 11.877 3.153 2.914 0 6.114-.607 9.06-1.852.439-.2.814.287.383.607zM22.792 14.961c-.336-.43-2.22-.207-3.074-.103-.255.032-.295-.192-.063-.36 1.5-1.053 3.967-.75 4.254-.399.287.36-.08 2.826-1.485 4.007-.215.184-.423.088-.327-.151.32-.79 1.03-2.57.695-2.994z"/></svg></span></td>
           <td class="org">Amazon Web Services</td>
           <td class="role">Software Development Engineer Intern, Supply Chain</td>
           <td class="when">May – Aug 2026</td>
         </tr>
         <tr>
+          <td class="logo"><span class="mark" style="background:#004894;border-color:#004894"><svg class="mark-svg mark-wide" viewBox="-2 176 215 52" role="img" aria-label="BASF"><sodipodi:namedview guidetolerance="10.0" gridtolerance="10.0" objecttolerance="10.0" borderopacity="1.0" bordercolor="#666666" pagecolor="#ffffff" id="base" /><defs id="defs59"> </defs> <g id="g2233" transform="matrix(1.522094,0,0,1.522094,-29.79473,13.70588)"><g transform="translate(-14.8625,-37.8153)" id="Ebene_x0020_2"> <polygon id="polygon6" style="fill:#004894;fill-rule:nonzero" points="14.8625,37.8153 14.8625,214.932 191.98,214.932 191.98,37.8153 14.8625,37.8153 " /> </g><path id="path46" style="fill:white;fill-rule:nonzero" d="M 70.112099,110.6927 L 83.374099,110.6927 C 88.241399,110.6927 90.463499,113.9379 90.463499,116.9048 C 90.463499,119.0409 89.643299,120.422 87.438099,121.7029 C 90.217299,122.7313 91.729999,124.5837 91.729999,127.4433 C 91.729999,130.8632 89.247499,134.4911 83.390999,134.4911 L 70.105799,134.4911 L 70.112099,110.6927 L 70.112099,110.6927 z M 77.353599,129.1187 L 82.152099,129.1187 C 83.862399,129.1187 84.630299,127.8966 84.630299,126.8161 C 84.630299,127.316 84.850499,124.8441 82.395499,124.8441 L 77.353599,124.8441 L 77.353599,129.1187 L 77.353599,129.1187 z M 77.370499,120.0625 L 81.226399,120.0625 C 82.990299,120.0625 83.691999,119.2427 83.691999,118.0386 C 83.691999,117.7599 83.605899,116.207 81.732599,116.207 L 77.370499,116.207 L 77.370499,120.0625 z " /><path id="path48" style="fill:white;fill-rule:nonzero" d="M 99.271499,110.6927 L 106.9412,110.6927 L 115.6732,134.465 L 107.8031,134.465 L 106.6509,130.9034 L 99.303899,130.9034 L 98.327799,134.4467 L 90.517299,134.4467 L 99.271499,110.6927 L 99.271499,110.6927 z M 102.794,117.7483 L 100.7697,125.6861 L 105.0965,125.6861 L 102.794,117.7483 L 102.794,117.7483 z " /><path id="path50" style="fill:white;fill-rule:nonzero" d="M 127.9025,117.7617 L 135.2131,117.7617 C 135.2131,113.7252 132.1761,109.9801 124.9709,109.9801 C 117.067,109.9801 114.6197,114.3422 114.6197,117.5352 C 114.6197,122.6822 120.92,124.0517 121.1154,124.1131 C 122.0577,124.4098 125.9654,125.4575 126.943,125.8064 C 127.7879,126.1084 128.5975,126.7854 128.5975,127.6899 C 128.5975,129.0792 126.943,129.748 125.5647,129.748 C 124.6806,129.748 121.7063,129.4552 121.7063,126.3024 L 114.1512,126.3024 C 114.1512,130.4889 117.0306,135.1723 125.1103,135.1723 C 134.0271,135.1723 135.8926,129.8535 135.8926,127.0263 C 135.8926,124.7181 134.5841,122.1591 131.5654,120.9392 C 129.7511,120.2064 126.744,119.5647 125.2341,119.1234 C 124.4711,118.8994 121.9328,118.3854 121.9328,116.8374 C 121.9328,114.8538 125.2041,115.1102 124.7265,115.1102 C 126.205,115.1102 127.9025,115.9421 127.9025,117.7617 L 127.9025,117.7617 z " /><polygon transform="translate(-14.8625,-37.8153)" id="polygon52" style="fill:white;fill-rule:nonzero" points="151.995,148.503 170.246,148.503 170.246,154.783 159.288,154.783 159.288,158.973 169.059,158.973 169.059,164.975 159.253,164.975 159.253,172.302 151.96,172.302 151.995,148.503 " /><path id="path54" style="fill:#a3abd1;fill-rule:nonzero" d="M 38.351856,118.0167 L 38.351856,127.1702 M 38.351856,118.0167 L 29.197956,118.0167 L 29.197956,127.1706 L 38.351856,127.1706 L 38.351856,118.0167 z M 22.191327,134.54838 L 22.509399,134.4967 L 22.191327,134.54838 z M 22.191327,110.74468 L 45.993527,110.74468 L 45.993527,134.54808 L 22.191327,134.54808 L 22.191327,110.74468 L 22.191327,110.74468 z " /><polygon transform="translate(-14.8625,-37.8153)" id="polygon56" style="fill:#a3abd1;fill-rule:nonzero" points="68.4974,155.832 68.4974,164.985 77.6524,164.985 77.6524,155.832 68.4974,155.832 " /></g></svg></span></td>
           <td class="org">BASF</td>
           <td class="role">Data Science Intern</td>
           <td class="when">May – Aug 2025</td>
         </tr>
         <tr>
+          <td class="logo"><span class="mark" style="background:#DD1D21;border-color:#DD1D21"><svg class="mark-svg" viewBox="0 0 24 24" role="img" aria-label="Shell"><path fill="#FFD500" d="M12 .863C5.34.863 0 6.251 0 12.98c0 .996.038 1.374.246 2.33l3.662 2.71.57 4.515h6.102l.326.227c.377.262.705.375 1.082.375.352 0 .732-.101 1.024-.313l.39-.289h6.094l.563-4.515 3.695-2.71c.208-.956.246-1.334.246-2.33C24 6.252 18.661.863 12 .863zm.996 2.258c.9 0 1.778.224 2.512.649l-2.465 12.548 3.42-12.062c1.059.36 1.863.941 2.508 1.814l.025.034-4.902 10.615 5.572-9.713.033.03c.758.708 1.247 1.567 1.492 2.648l-6.195 7.666 6.436-6.5.01.021c.253.563.417 1.36.417 1.996 0 .509-.024.712-.164 1.25l-3.554 2.602-.467 3.71h-4.475l-.517.395c-.199.158-.482.266-.682.266-.199 0-.483-.108-.682-.266l-.517-.394H6.322l-.445-3.61-3.627-2.666c-.11-.436-.16-.83-.16-1.261 0-.72.159-1.49.426-2.053l.013-.024 6.45 6.551L2.75 9.621c.25-1.063.874-2.09 1.64-2.713l5.542 9.776L4.979 6.1c.555-.814 1.45-1.455 2.546-1.827l3.424 12.069L8.355 3.816l.055-.03c.814-.45 1.598-.657 2.457-.657.195 0 .286.004.528.03l.587 13.05.46-13.059c.224-.025.309-.029.554-.029z"/></svg></span></td>
           <td class="org">Shell</td>
           <td class="role">Machine Learning Intern</td>
           <td class="when">Jan – May 2025</td>
         </tr>
         <tr>
+          <td class="logo"><span class="mark"><svg class="mark-svg mark-wide" viewBox="0 0 524 163" role="img" aria-label="LSU"><polygon fill="#461D7C" points="56,129.8 146.2,129.8 146.2,162.7 0,162.7 0,0 56,0"/> <path fill="#461D7C" d="M208.3,0h125.9v33.2h-99.3c-10.4,0-18.9,6.3-18.9,14v17.5h118.2v61.8 c0,19.9-21.9,36.2-48.9,36.2H159.6v-33.2h99.1c10.6,0,19.1-6.3,19.1-14V97.8H159.6V36.2 C159.6,16.3,181.5,0,208.3,0"/> <path fill="#461D7C" d="M466.9,0h56.2v126.5c0,19.9-21.9,36.2-48.7,36.2H349V0.4h55.8v129.4h43 c10.6,0,19.1-6.3,19.1-14.2V0z"/></svg></span></td>
           <td class="org">LSU Biomechanics</td>
           <td class="role">Undergraduate Researcher</td>
           <td class="when">Jan 2024 – present</td>
         </tr>
         <tr>
+          <td class="logo"><span class="mark"><svg class="mark-svg mark-wide" viewBox="0 0 524 163" role="img" aria-label="LSU"><polygon fill="#461D7C" points="56,129.8 146.2,129.8 146.2,162.7 0,162.7 0,0 56,0"/> <path fill="#461D7C" d="M208.3,0h125.9v33.2h-99.3c-10.4,0-18.9,6.3-18.9,14v17.5h118.2v61.8 c0,19.9-21.9,36.2-48.9,36.2H159.6v-33.2h99.1c10.6,0,19.1-6.3,19.1-14V97.8H159.6V36.2 C159.6,16.3,181.5,0,208.3,0"/> <path fill="#461D7C" d="M466.9,0h56.2v126.5c0,19.9-21.9,36.2-48.7,36.2H349V0.4h55.8v129.4h43 c10.6,0,19.1-6.3,19.1-14.2V0z"/></svg></span></td>
           <td class="org">LSU Computer Science</td>
           <td class="role">Undergraduate Teaching &amp; Research Assistant</td>
           <td class="when">Aug 2023 – Aug 2024</td>
@@ -308,27 +334,5 @@
   </div>
 </footer>
 
-<script>
-  (function () {
-    var els = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
-    var queued = false;
-    function check() {
-      queued = false;
-      var h = window.innerHeight;
-      for (var i = els.length - 1; i >= 0; i--) {
-        if (els[i].getBoundingClientRect().top < h * 0.94) {
-          els[i].classList.add("in");
-          els.splice(i, 1);
-        }
-      }
-    }
-    function queue() { if (!queued) { queued = true; requestAnimationFrame(check); } }
-    window.addEventListener("scroll", queue, { passive: true });
-    window.addEventListener("resize", queue);
-    window.addEventListener("load", check);
-    check();
-    setTimeout(check, 400);
-  })();
-</script>
 </body>
 </html>

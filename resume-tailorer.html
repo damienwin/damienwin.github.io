@@ -5,68 +5,65 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="description" content="An agentic pipeline that scans job boards, tailors a one-page LaTeX resume per posting, and verifies it against an ATS before it ships." />
 <title>Resume Tailorer — Damien Nguyen</title>
-<script>document.documentElement.className += " js";</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;1,6..72,400&display=swap" rel="stylesheet" />
 <style>
   :root {
-    --ground: #f7f6f3;
-    --surface: #ffffff;
-    --sunk: #efede8;
-    --ink: #14171d;
-    --ink-2: #565c68;
-    --ink-3: #8a8f9b;
-    --rule: #e2dfd8;
-    --accent: #2f52e0;
-    --accent-2: #6b86f0;
-    --accent-soft: #e8ecfd;
-    --warn: #b4720e;
-    --good: #137a54;
-    --hero-top: #080b10;
-    --hero-mid: #141a26;
+    --ground: #e9eae4;
+    --surface: #f6f6f2;
+    --sunk: #dedfd8;
+    --ink: #15181a;
+    --ink-2: #4e5457;
+    --ink-3: #7c8386;
+    --rule: #c8cac2;
+    --accent: #146a70;
+    --accent-2: #1e8a8f;
+    --accent-soft: #d6e4e3;
+    --warn: #a8681a;
+    --good: #146a70;
+    --hero-top: #101214;
+    --hero-mid: #1c1f21;
     --card-shadow: 0 1px 2px rgba(20, 23, 29, 0.04), 0 12px 34px rgba(20, 23, 29, 0.07);
-    --pill-glow: 0 4px 20px rgba(47, 82, 224, 0.35);
 
-    --display: "Hoefler Text", Baskerville, "Palatino Linotype", Palatino, Georgia, serif;
-    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --display: "Newsreader", "Hoefler Text", Baskerville, Georgia, serif;
+    --sans: "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   }
 
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #0c0f14;
-      --surface: #12161d;
-      --sunk: #171c24;
-      --ink: #e9ebf0;
-      --ink-2: #9aa2b1;
-      --ink-3: #6f7787;
-      --rule: #232935;
-      --accent: #8da3ff;
-      --accent-2: #6b86f0;
-      --accent-soft: #172038;
-      --warn: #d5a05a;
-      --good: #4fbf93;
-      --hero-top: #05070a;
-      --hero-mid: #0a0d13;
-      --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 40px rgba(0, 0, 0, 0.45);
-      --pill-glow: 0 4px 22px rgba(141, 163, 255, 0.28);
+      --ground: #16181a;
+      --surface: #1f2225;
+      --sunk: #131517;
+      --ink: #e7e8e1;
+      --ink-2: #a0a6a6;
+      --ink-3: #767c7d;
+      --rule: #363a3c;
+      --accent: #6fbdbf;
+      --accent-2: #1e8a8f;
+      --accent-soft: #173033;
+      --warn: #d2a05a;
+      --good: #6fbdbf;
+      --hero-top: #0d0f10;
+      --hero-mid: #141618;
     }
   }
   :root[data-theme="dark"] {
-    --ground: #0c0f14;
-    --surface: #12161d;
-    --sunk: #171c24;
-    --ink: #e9ebf0;
-    --ink-2: #9aa2b1;
-    --ink-3: #6f7787;
-    --rule: #232935;
-    --accent: #8da3ff;
-    --accent-2: #6b86f0;
-    --accent-soft: #172038;
-    --warn: #d5a05a;
-    --good: #4fbf93;
-    --hero-top: #05070a;
-    --hero-mid: #0a0d13;
-    --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 40px rgba(0, 0, 0, 0.45);
-    --pill-glow: 0 4px 22px rgba(141, 163, 255, 0.28);
+    --ground: #16181a;
+    --surface: #1f2225;
+    --sunk: #131517;
+    --ink: #e7e8e1;
+    --ink-2: #a0a6a6;
+    --ink-3: #767c7d;
+    --rule: #363a3c;
+    --accent: #6fbdbf;
+    --accent-2: #1e8a8f;
+    --accent-soft: #173033;
+    --warn: #d2a05a;
+    --good: #6fbdbf;
+    --hero-top: #0d0f10;
+    --hero-mid: #141618;
   }
 
   * { box-sizing: border-box; }
@@ -81,7 +78,11 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Width follows the role of the content: the flowmap and the ledger run
+     wide, prose runs to a reading measure. */
   .container { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+  .container.narrow { max-width: 780px; }
+  .container.wide { max-width: 1280px; }
   .col { max-width: 62ch; }
 
   p { margin: 0 0 1em; }
@@ -90,12 +91,14 @@
   a { color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 3px; }
 
+  /* Running heads on a rule, not the stock all-caps letterspaced eyebrow
+     stamped on every section. */
   .eyebrow {
     font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+    font-size: 0.74rem;
     color: var(--ink-3);
+    border-top: 1px solid var(--rule);
+    padding-top: 10px;
   }
 
   /* ---------------- nav ---------------- */
@@ -145,20 +148,20 @@
   nav.top[data-past="true"] .brand,
   nav.top[data-past="true"] .back { opacity: 0; pointer-events: none; }
 
+  /* A flat, quiet secondary action. It is not the point of the page. */
   .pill {
-    font-family: var(--sans);
-    font-size: 0.84rem;
-    font-weight: 500;
-    color: #fff;
-    background: linear-gradient(180deg, var(--accent-2), var(--accent));
-    border-radius: 999px;
-    padding: 9px 20px;
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: #e7e8e1;
+    background: #1f2225;
+    border: 1px solid #3a3e40;
+    border-radius: 3px;
+    padding: 7px 15px;
     text-decoration: none;
-    box-shadow: var(--pill-glow);
     white-space: nowrap;
-    transition: transform 200ms ease, box-shadow 200ms ease;
+    transition: border-color 200ms ease, color 200ms ease;
   }
-  .pill:hover { transform: translateY(-1px); box-shadow: 0 6px 26px rgba(47, 82, 224, 0.45); }
+  .pill:hover { color: #fff; border-color: #6a7072; }
 
   /* ---------------- hero ---------------- */
 
@@ -168,8 +171,6 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    text-align: center;
     padding: 150px 28px 210px;
     /* The light-theme ground is paper, so the hero must stay dark under every
        piece of hero text and only turn over in the bottom fifth, where the
@@ -193,15 +194,24 @@
     display: block;
   }
 
-  .hero-inner { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 26px; }
+  .hero-inner {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; gap: 26px;
+    width: 100%; max-width: 1024px; margin: 0 auto;
+  }
 
   .hero .kicker {
     font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+    font-size: 0.78rem;
     color: rgba(255, 255, 255, 0.5);
   }
+
+  /* One orchestrated entrance on load, in place of a fade-up on every block. */
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  .hero-inner > * { animation: rise 620ms cubic-bezier(.2, .7, .3, 1) backwards; }
+  .hero-inner > *:nth-child(2) { animation-delay: 90ms; }
+  .hero-inner > *:nth-child(3) { animation-delay: 180ms; }
+  .hero-inner > *:nth-child(4) { animation-delay: 270ms; }
 
   h1 {
     font-family: var(--display);
@@ -212,7 +222,8 @@
     color: #fff;
     max-width: 15ch;
   }
-  h1 em { font-style: italic; color: rgba(255, 255, 255, 0.82); }
+  /* Emphasis is earned tonally, within one face, not by borrowing an italic. */
+  h1 em { font-style: normal; color: rgba(255, 255, 255, 0.6); }
 
   .hero .sub {
     font-size: clamp(1rem, 1.5vw, 1.14rem);
@@ -224,7 +235,6 @@
   .hero .stack {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 8px;
     margin-top: 4px;
   }
@@ -234,8 +244,8 @@
     letter-spacing: 0.04em;
     color: rgba(255, 255, 255, 0.62);
     border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 999px;
-    padding: 5px 13px;
+    border-radius: 2px;
+    padding: 5px 12px;
   }
 
   /* ---------------- headline metrics ---------------- */
@@ -247,7 +257,7 @@
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: 16px;
+    border-radius: 4px;
     box-shadow: var(--card-shadow);
     overflow: hidden;
   }
@@ -302,13 +312,10 @@
   }
   .section-head p { color: var(--ink-2); font-size: 1.02rem; }
 
-  .js .reveal { opacity: 0; transform: translateY(22px); transition: opacity 700ms ease, transform 700ms ease; }
-  .js .reveal.in { opacity: 1; transform: none; }
-
   .card {
     background: var(--surface);
     border: 1px solid var(--rule);
-    border-radius: 16px;
+    border-radius: 4px;
     box-shadow: var(--card-shadow);
     overflow: hidden;
   }
@@ -363,19 +370,21 @@
 
   .controls { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
   .controls .hint { max-width: 30ch; }
+  /* The primary action on the page, so it is the one place the accent goes
+     solid: flat teal, no gradient, no glow. */
   button.walk {
     font-family: var(--sans);
-    font-size: 0.84rem;
+    font-size: 0.86rem;
     font-weight: 500;
-    color: #fff;
-    background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    color: var(--ground);
+    background: var(--accent);
     border: none;
-    border-radius: 999px;
-    padding: 10px 22px;
+    border-radius: 3px;
+    padding: 11px 22px;
     cursor: pointer;
-    box-shadow: var(--pill-glow);
+    transition: background 180ms ease;
   }
-  button.walk:hover { opacity: 0.92; }
+  button.walk:hover { background: var(--accent-2); }
   .hint { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-3); }
 
   /* ---------------- tree ---------------- */
@@ -397,7 +406,7 @@
 
   /* ---------------- checks ---------------- */
 
-  ul.checks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 16px; overflow: hidden; box-shadow: var(--card-shadow); }
+  ul.checks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 4px; overflow: hidden; box-shadow: var(--card-shadow); }
   ul.checks li { background: var(--surface); padding: 24px 26px; display: flex; flex-direction: column; gap: 10px; }
   ul.checks .tag { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--good); }
   ul.checks .tag.flag { color: var(--warn); }
@@ -408,12 +417,12 @@
   /* ---------------- ledger ---------------- */
 
   .ledger { display: flex; flex-direction: column; gap: 44px; }
-  .sub-h { font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 16px; }
+  .sub-h { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); border-top: 1px solid var(--rule); padding-top: 10px; margin-bottom: 16px; }
 
   .funnel { display: flex; flex-direction: column; gap: 3px; }
   .funnel-row { display: grid; grid-template-columns: 15ch minmax(0, 1fr) 8ch; align-items: center; gap: 16px; font-family: var(--mono); font-size: 0.76rem; }
   .funnel-row .label { color: var(--ink-2); }
-  .funnel-row .bar { height: 20px; background: var(--sunk); border-radius: 3px; overflow: hidden; }
+  .funnel-row .bar { height: 20px; background: var(--sunk); border-radius: 2px; overflow: hidden; }
   .funnel-row .bar span { display: block; height: 100%; background: var(--accent); opacity: 0.9; }
   .funnel-row .bar span.drop { background: var(--ink-3); opacity: 0.3; }
   .funnel-row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
@@ -424,7 +433,7 @@
   table.lt td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
   table.lt td.dim { color: var(--ink-3); }
 
-  .caveat { border-left: 2px solid var(--warn); padding: 4px 0 4px 20px; color: var(--ink-2); font-size: 0.94rem; max-width: 70ch; margin-top: 20px; }
+  .caveat { color: var(--ink-2); font-size: 0.94rem; max-width: 70ch; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--rule); }
 
   /* ---------------- footer ---------------- */
 
@@ -436,15 +445,17 @@
   footer .fine { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-3); line-height: 1.7; max-width: 62ch; }
 
   @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
-    .js .reveal { opacity: 1; transform: none; }
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
   }
 </style>
 </head>
 <body>
 <nav class="top" id="nav">
   <a class="brand" href="index.html"><span class="mark"></span>Damien Nguyen</a>
-  <a class="back" href="index.html" id="back">&larr; All work</a>
+  <a class="back" href="index.html" id="back">All work</a>
   <a class="pill" href="https://github.com/damienwin/resume-builder">View source</a>
 </nav>
 
@@ -467,8 +478,8 @@
 </div>
 
 <section class="lead">
-  <div class="container">
-    <div class="head-row reveal">
+  <div class="container wide">
+    <div class="head-row">
       <div class="section-head">
         <div class="eyebrow">The workflow</div>
         <h2>One orchestrator, N subagents, one shared verification bar.</h2>
@@ -479,7 +490,7 @@
       </div>
     </div>
 
-    <div class="card reveal">
+    <div class="card">
       <figure>
         <div class="figure-scroll">
           <svg class="flowmap" viewBox="0 0 1160 650" role="img"
@@ -634,8 +645,8 @@
 
 <div class="band">
   <div class="container">
-    <div class="eyebrow reveal" style="margin-bottom:16px;">Measured live</div>
-    <div class="metrics reveal">
+    <div class="eyebrow" style="margin-bottom:16px;">Measured live</div>
+    <div class="metrics">
       <div class="metric">
         <span class="n">0.98<small> s</small></span>
         <span class="k">Boards fetched, parsed and filtered — 2,060 postings</span>
@@ -653,7 +664,7 @@
         <span class="k">Wall-clock cost of N postings, via parallel subagents</span>
       </div>
     </div>
-    <p class="band-note reveal">
+    <p class="band-note">
       Latency measured live against both boards, median of 3 runs: 0.89 s network,
       50 ms parse, 40 ms dedupe and filter. Token counts from the repo's own
       before/after record. The scan spends nothing on inference because the boards
@@ -664,7 +675,7 @@
 
 <section>
   <div class="container">
-    <div class="section-head reveal">
+    <div class="section-head">
       <div class="eyebrow">The repository</div>
       <h2>Every node above is a directory you can open.</h2>
       <p>
@@ -675,15 +686,15 @@
       </p>
     </div>
 
-    <div class="card reveal">
+    <div class="card">
 <pre class="tree" id="tree"><span class="ln"><span class="d">resume-builder/</span></span><span class="ln" data-node="entry">├── AGENTS.md                      <span class="c">entry point for Codex and other agents</span></span><span class="ln"><span class="d">├── .claude/</span></span><span class="ln" data-node="entry">│   ├── commands/                  <span class="c">/start /job-scan /tailor /apply /ats-score</span></span><span class="ln"><span class="d">│   └── skills/</span></span><span class="ln" data-node="orchestrator">│       ├── start/                 <span class="c">setup check, then wraps job-scan</span></span><span class="ln" data-node="orchestrator gate">│       ├── job-scan/              <span class="c">scan, triage, eligibility gate, fan out</span></span><span class="ln" data-node="tailor">│       ├── tailor-resume/         <span class="c">the pipeline itself, person-agnostic</span></span><span class="ln" data-node="ats">│       ├── ats-score/             <span class="c">optional open-source ATS harness</span></span><span class="ln" data-node="apply">│       ├── apply/                 <span class="c">tailor first, then autofill the form</span></span><span class="ln" data-node="apply">│       └── app-profile-sync/      <span class="c">pushes knowledge/ into the autofill store</span></span><span class="ln" data-node="tools">├── scripts/</span><span class="ln" data-node="tools">│   ├── parse_simplify_jobs.py     <span class="c">HTML table parser, 1,812 rows</span></span><span class="ln" data-node="tools">│   ├── parse_speedyapply_jobs.py  <span class="c">second source, merged for new-grad runs</span></span><span class="ln" data-node="tools">│   ├── merge_and_filter_jobs.py   <span class="c">cross-source dedupe + already-applied</span></span><span class="ln" data-node="tools">│   ├── test_merge_and_filter_jobs.py  <span class="c">27 unit tests guarding the filter</span></span><span class="ln" data-node="outputs">│   └── log_metric.py              <span class="c">appends one line per run</span></span><span class="ln" data-node="tailor gate"><span class="d">├── knowledge/</span>                     <span class="c">your history, gitignored, never committed</span></span><span class="ln" data-node="gate tailor apply">│   ├── profile.md education.md    <span class="c">read by the gate for cohort and work auth</span></span><span class="ln" data-node="tailor">│   ├── experience/ research/      <span class="c">one prose file per role</span></span><span class="ln" data-node="tailor">│   ├── projects/                  <span class="c">one per project, carries repo: and demo:</span></span><span class="ln" data-node="outputs">│   └── metrics.jsonl              <span class="c">every figure on this page comes from here</span></span><span class="ln" data-node="tailor render">├── templates/jakes_resume.tex     <span class="c">parameterized LaTeX, ATS-safe rules baked in</span></span><span class="ln" data-node="outputs">├── build/                         <span class="c">generated .tex and .pdf, gitignored</span></span><span class="ln" data-node="ats">├── tools/hiring-agent/            <span class="c">HackerRank's open-source screener, cloned</span></span><span class="ln" data-node="ats">└── eval/                          <span class="c">score cache and A/B results</span></span></pre>
     </div>
   </div>
 </section>
 
 <section>
-  <div class="container">
-    <div class="section-head reveal">
+  <div class="container narrow">
+    <div class="section-head">
       <div class="eyebrow">The verification bar</div>
       <h2>Checks that exist because a real PDF failed them.</h2>
       <p>
@@ -693,7 +704,7 @@
       </p>
     </div>
 
-    <ul class="checks reveal">
+    <ul class="checks">
       <li>
         <span class="tag">Enforced</span>
         <p><strong>No math-mode symbols in bullets.</strong> <code>$\to$</code> and
@@ -730,12 +741,12 @@
 
 <section>
   <div class="container ledger">
-    <div class="section-head reveal" style="margin-bottom:0;">
+    <div class="section-head" style="margin-bottom:0;">
       <div class="eyebrow">Ledger</div>
       <h2>The numbers behind all of the above.</h2>
     </div>
 
-    <div class="reveal">
+    <div>
       <div class="sub-h">Scan funnel — live run, both boards</div>
       <div class="funnel">
         <div class="funnel-row"><span class="label">fetched</span><span class="bar"><span style="width:100%"></span></span><span class="n">2,060</span></div>
@@ -747,7 +758,7 @@
       </div>
     </div>
 
-    <div class="reveal">
+    <div>
       <div class="sub-h">Agent context, before and after moving logic into scripts</div>
       <table class="lt">
         <thead><tr><th>Path</th><th class="num">Before</th><th class="num">After</th><th class="num">Change</th></tr></thead>
@@ -759,7 +770,7 @@
       </table>
     </div>
 
-    <div class="reveal">
+    <div>
       <div class="sub-h">Recorded runs, 2026-08-10 to 2026-08-22</div>
       <table class="lt">
         <thead><tr><th>Event</th><th class="num">Count</th><th>Detail</th></tr></thead>
@@ -773,7 +784,7 @@
       </table>
     </div>
 
-    <div class="reveal">
+    <div>
       <div class="sub-h">Scoring against HackerRank's open-source screener</div>
       <table class="lt">
         <thead><tr><th>Measure</th><th class="num">Value</th><th>Reading</th></tr></thead>
@@ -858,7 +869,7 @@
       var gx = W / 2, gy = H * 0.9;
       var g = ctx.createRadialGradient(gx, gy, 0, gx, gy, Math.min(W, H) * 0.34);
       g.addColorStop(0, "rgba(255,255,255,0.20)");
-      g.addColorStop(0.45, "rgba(140,170,255,0.09)");
+      g.addColorStop(0.45, "rgba(111,189,191,0.10)");
       g.addColorStop(1, "rgba(255,255,255,0)");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
@@ -874,7 +885,7 @@
         var a = fade * (0.16 + 0.4 * (1 - t));
 
         if (p.picked) {
-          ctx.fillStyle = "rgba(150,180,255," + Math.min(0.95, a * 3.2) + ")";
+          ctx.fillStyle = "rgba(111,189,191," + Math.min(0.95, a * 3.2) + ")";
           ctx.fillRect(x - p.r, y - p.r, p.r * 2.4, p.r * 2.4);
         } else {
           ctx.fillStyle = "rgba(255,255,255," + a + ")";
@@ -920,34 +931,6 @@
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     onScroll();
-  })();
-
-  /* ---------------- scroll reveal ---------------- */
-  (function () {
-    var els = Array.prototype.slice.call(document.querySelectorAll(".reveal"));
-    var queued = false;
-
-    /* Position-based rather than intersection-based: an element scrolled past
-       before a callback fires still reveals, so content can never get stranded
-       invisible on a fast scroll or a restored scroll position. */
-    function check() {
-      queued = false;
-      var h = window.innerHeight;
-      for (var i = els.length - 1; i >= 0; i--) {
-        if (els[i].getBoundingClientRect().top < h * 0.94) {
-          els[i].classList.add("in");
-          els.splice(i, 1);
-        }
-      }
-    }
-    function queue() {
-      if (!queued) { queued = true; requestAnimationFrame(check); }
-    }
-    window.addEventListener("scroll", queue, { passive: true });
-    window.addEventListener("resize", queue);
-    window.addEventListener("load", check);
-    check();
-    setTimeout(check, 400);
   })();
 
   /* ---------------- diagram ---------------- */
