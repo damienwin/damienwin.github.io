@@ -423,12 +423,24 @@
   .sub-h { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-3); border-top: 1px solid var(--rule); padding-top: 10px; margin-bottom: 16px; }
 
   .funnel { display: flex; flex-direction: column; gap: 3px; }
-  .funnel-row { display: grid; grid-template-columns: 15ch minmax(0, 1fr) 8ch; align-items: center; gap: 16px; font-family: var(--mono); font-size: 0.76rem; }
-  .funnel-row .label { color: var(--ink-2); }
+  .funnel-row { display: grid; grid-template-columns: 18ch minmax(0, 1fr) 8ch; align-items: center; gap: 16px; font-family: var(--mono); font-size: 0.76rem; }
+  .funnel-row .label { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .funnel-row .bar { height: 20px; background: var(--sunk); border-radius: 2px; overflow: hidden; }
   .funnel-row .bar span { display: block; height: 100%; background: var(--accent); opacity: 0.9; }
   .funnel-row .bar span.drop { background: var(--ink-3); opacity: 0.3; }
   .funnel-row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  .mix { display: flex; flex-direction: column; gap: 3px; }
+  .mix-row { display: grid; grid-template-columns: 20ch minmax(0, 1fr) 6ch; align-items: center; gap: 16px; font-family: var(--mono); font-size: 0.76rem; }
+  .mix-row .label { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mix-row .bar { height: 20px; background: var(--sunk); border-radius: 2px; overflow: hidden; display: flex; }
+  .mix-row .bar span { display: block; height: 100%; background: var(--accent); opacity: 0.9; }
+  .mix-row .bar span.fail { background: var(--ink-3); opacity: 0.35; }
+  .mix-row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+  .mix-cat { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; margin: 16px 0 6px; }
+  .mix-cat:first-child { margin-top: 0; }
+  .mix-note { color: var(--ink-2); font-size: 0.92rem; max-width: 68ch; margin-top: 20px; }
+  .mix-note strong { color: var(--ink); font-weight: 600; }
 
   /* ---------------- footer ---------------- */
 
@@ -730,7 +742,7 @@
   <div class="container ledger">
     <div class="section-head" style="margin-bottom:0;">
       <div class="eyebrow">Ledger</div>
-      <h2>The numbers behind all of the above.</h2>
+      <h2>Where the pipeline actually bends, across 52 tailoring runs and 32 applications.</h2>
     </div>
 
     <div>
@@ -738,11 +750,55 @@
       <div class="funnel">
         <div class="funnel-row"><span class="label">fetched</span><span class="bar"><span style="width:100%"></span></span><span class="n">2,060</span></div>
         <div class="funnel-row"><span class="label">closed</span><span class="bar"><span class="drop" style="width:71.6%"></span></span><span class="n">-1,474</span></div>
-        <div class="funnel-row"><span class="label">cross-source dup</span><span class="bar"><span class="drop" style="width:0.4%"></span></span><span class="n">-0</span></div>
-        <div class="funnel-row"><span class="label">already applied</span><span class="bar"><span class="drop" style="width:0.4%"></span></span><span class="n">-0</span></div>
+        <div class="funnel-row"><span class="label">cross-source dup</span><span class="bar"></span><span class="n">0</span></div>
+        <div class="funnel-row"><span class="label">already applied</span><span class="bar"></span><span class="n">0</span></div>
         <div class="funnel-row"><span class="label">outside window</span><span class="bar"><span class="drop" style="width:27.8%"></span></span><span class="n">-573</span></div>
         <div class="funnel-row"><span class="label">surfaced</span><span class="bar"><span style="width:2%"></span></span><span class="n">13</span></div>
       </div>
+    </div>
+
+    <div>
+      <div class="sub-h">What selection actually chooses — share of 52 tailored resumes</div>
+      <div class="mix">
+        <div class="mix-cat">Roles</div>
+        <div class="mix-row"><span class="label">AWS</span><span class="bar"><span style="width:100%"></span></span><span class="n">100%</span></div>
+        <div class="mix-row"><span class="label">BASF</span><span class="bar"><span style="width:94%"></span></span><span class="n">94%</span></div>
+        <div class="mix-row"><span class="label">Shell</span><span class="bar"><span style="width:50%"></span></span><span class="n">50%</span></div>
+        <div class="mix-row"><span class="label">LSU CS TA</span><span class="bar"><span style="width:37%"></span></span><span class="n">37%</span></div>
+        <div class="mix-row"><span class="label">LSU Biomechanics</span><span class="bar"><span style="width:23%"></span></span><span class="n">23%</span></div>
+        <div class="mix-cat">Projects</div>
+        <div class="mix-row"><span class="label">Resume Tailorer</span><span class="bar"><span style="width:79%"></span></span><span class="n">79%</span></div>
+        <div class="mix-row"><span class="label">Deep Neural Net</span><span class="bar"><span style="width:50%"></span></span><span class="n">50%</span></div>
+        <div class="mix-row"><span class="label">Kalshi</span><span class="bar"><span style="width:38%"></span></span><span class="n">38%</span></div>
+      </div>
+      <p class="mix-note">
+        AWS sits at 100% because a rule pins it, not because selection converged
+        there. The interesting part is the middle: Shell, the TA role and
+        Biomechanics trade places by posting, which is the tailoring doing real
+        work. The honest limit is that those 52 runs produced only
+        <strong>five distinct combinations</strong> — the selector discriminates
+        between job families, not between individual postings.
+      </p>
+    </div>
+
+    <div>
+      <div class="sub-h">Autofill reliability by ATS — 32 applications, filled vs. failed</div>
+      <div class="mix">
+        <div class="mix-row"><span class="label">Ashby</span><span class="bar"><span style="width:90.9%"></span><span class="fail" style="width:9.1%"></span></span><span class="n">10/11</span></div>
+        <div class="mix-row"><span class="label">Greenhouse</span><span class="bar"><span style="width:72.7%"></span><span class="fail" style="width:9.1%"></span></span><span class="n">8/9</span></div>
+        <div class="mix-row"><span class="label">Workday</span><span class="bar"><span style="width:27.3%"></span><span class="fail" style="width:36.4%"></span></span><span class="n">3/7</span></div>
+        <div class="mix-row"><span class="label">Other</span><span class="bar"><span style="width:36.4%"></span><span class="fail" style="width:9.1%"></span></span><span class="n">4/5</span></div>
+      </div>
+      <p class="mix-note">
+        Every row is drawn on the same axis, so bar length is volume and the grey
+        tail is failures. <strong>Workday is the weak spot</strong> — it accounts
+        for four of the seven total failures on its own, against one apiece
+        everywhere else. Why is not yet instrumented: only one failure in the log
+        carries a recorded cause, a Greenhouse form embedded in a cross-origin
+        iframe that clicks and keystrokes never reached. Logging a reason on
+        every failure is the obvious next fix. Nothing here is auto-submitted;
+        "filled" means the form reached a human for final review.
+      </p>
     </div>
   </div>
 </section>
