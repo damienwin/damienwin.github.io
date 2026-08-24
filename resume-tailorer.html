@@ -430,14 +430,6 @@
   .funnel-row .bar span.drop { background: var(--ink-3); opacity: 0.3; }
   .funnel-row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
 
-  table.lt { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.77rem; }
-  table.lt th, table.lt td { text-align: left; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); }
-  table.lt th { font-weight: 400; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; font-size: 0.68rem; }
-  table.lt td.num { text-align: right; font-variant-numeric: tabular-nums; padding-right: 0; }
-  table.lt td.dim { color: var(--ink-3); }
-
-  .caveat { color: var(--ink-2); font-size: 0.94rem; max-width: 70ch; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--rule); }
-
   /* ---------------- footer ---------------- */
 
   footer { border-top: 1px solid var(--rule); padding: 44px 0 72px; }
@@ -751,40 +743,6 @@
         <div class="funnel-row"><span class="label">outside window</span><span class="bar"><span class="drop" style="width:27.8%"></span></span><span class="n">-573</span></div>
         <div class="funnel-row"><span class="label">surfaced</span><span class="bar"><span style="width:2%"></span></span><span class="n">13</span></div>
       </div>
-    </div>
-
-    <div>
-      <div class="sub-h">Recorded runs, 2026-08-10 to 2026-08-22</div>
-      <table class="lt">
-        <thead><tr><th>Event</th><th class="num">Count</th><th>Detail</th></tr></thead>
-        <tbody>
-          <tr><td>resumes tailored</td><td class="num">52</td><td class="dim">40 distinct roles</td></tr>
-          <tr><td>keyword coverage</td><td class="num">73%</td><td class="dim">202 of 278 required strings; 17 runs at 100%</td></tr>
-          <tr><td>applications filled</td><td class="num">31</td><td class="dim">25 reached human review, 6 failed</td></tr>
-          <tr><td>ATS platforms</td><td class="num">6</td><td class="dim">Greenhouse, Ashby, Lever, Workday, Rippling, LinkedIn</td></tr>
-          <tr><td>auto-submitted</td><td class="num">0</td><td class="dim">by design — always stops at final review</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div>
-      <div class="sub-h">Scoring against HackerRank's open-source screener</div>
-      <table class="lt">
-        <thead><tr><th>Measure</th><th class="num">Value</th><th>Reading</th></tr></thead>
-        <tbody>
-          <tr><td>missing-link deduction, before</td><td class="num">5 / 9</td><td class="dim">runs penalizing an unlinked project</td></tr>
-          <tr><td>missing-link deduction, after</td><td class="num">0 / 9</td><td class="dim">structural fix: render the link</td></tr>
-          <tr><td>scorer spread, one fixed PDF</td><td class="num">66–99</td><td class="dim">published non-determinism</td></tr>
-          <tr><td>context A/B, N=9 per PDF</td><td class="num">0</td><td class="dim">median delta; 95% CI [-2, +1]</td></tr>
-        </tbody>
-      </table>
-      <p class="caveat">
-        The same scorer gave one unchanged PDF anywhere from 66 to 99 across 100
-        public runs — wider than almost any change worth making. So the A/B above
-        ran 54 scoring runs and still concluded "no detectable difference" rather
-        than claiming a win. Chasing a number this noisy is how you end up
-        optimizing for an instrument instead of a reader.
-      </p>
     </div>
   </div>
 </section>
